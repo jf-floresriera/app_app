@@ -138,7 +138,7 @@ trueFalse('another_id', 'Topic', 'Statement…', true),
 multiple('id3', 'Topic', 'Select all…', [/* options */], ['a', 'c']),
 ```
 
-Parametric, ordering, matching, chart and simulator questions use the `{ id, make(rng) }` form: copy an existing one (`incidencia`, `ciclo`, `patogenos`, `umbral_grafico`, `simulador_fungicida`). Always use `rng`, never `Math.random`, so each attempt is reproducible and the server can grade it. Correct answers live only on the server. Each question is worth 1 point; grade = `points / total × 5`.
+Parametric, ordering, matching, chart and simulator questions use the `{ id, make(rng) }` form: copy an existing one (`incidencia`, `ciclo`, `patogenos`, `umbral_grafico`, `simulador_fungicida`). Always use `rng`, never `Math.random`, so each attempt is reproducible and the server can grade it. **Scientific names in italics:** wrap them in asterisks in any question or option text, e.g. `*Phytophthora infestans*` or `*Fusarium oxysporum* f. sp. *cubense*`. The browser renders them in italics. Correct answers live only on the server. Each question is worth 1 point; grade = `points / total × 5`.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 

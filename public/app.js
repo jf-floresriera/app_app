@@ -6,12 +6,24 @@
   const $ = (id) => document.getElementById(id);
   const SVG_NS = 'http://www.w3.org/2000/svg';
 
+  /** Convierte *texto* en cursiva (<i>) sin usar innerHTML. */
+  function rich(str) {
+    const frag = document.createDocumentFragment();
+    String(str).split(/\*([^*]+)\*/).forEach((part, i) => {
+      if (!part) return;
+      if (i % 2) { const it = document.createElement('i'); it.textContent = part; frag.append(it); }
+      else frag.append(document.createTextNode(part));
+    });
+    return frag;
+  }
+
   function el(tag, attrs = {}, ...kids) {
     const n = document.createElement(tag);
     for (const [k, v] of Object.entries(attrs)) {
       if (v === false || v == null) continue;
       if (k === 'class') n.className = v;
       else if (k === 'text') n.textContent = v;
+      else if (k === 'rich') n.append(rich(v));
       else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
       else n.setAttribute(k, v === true ? '' : v);
     }
@@ -428,7 +440,7 @@
     const q = st.questions[current];
     $('q-count').textContent = `Pregunta ${current + 1} de ${st.questions.length}`;
     $('q-topic').textContent = q.topic;
-    $('q-prompt').textContent = q.prompt;
+    $('q-prompt').replaceChildren(rich(q.prompt));
     $('q-prev').disabled = current === 0;
     $('q-next').classList.toggle('hidden', current === st.questions.length - 1);
     setSaved('');
@@ -450,7 +462,7 @@
     return el('button', {
       type: 'button', class: `opt${selected ? ' selected' : ''}`,
       role: kind === 'round' ? 'radio' : 'checkbox', 'aria-checked': String(selected), onclick,
-    }, el('span', { class: `mark ${kind}` }), el('span', { text }));
+    }, el('span', { class: `mark ${kind}` }), el('span', { rich: text }));
   }
 
   const RENDERERS = {
@@ -512,7 +524,7 @@
         el('ol', { class: 'order-list' }, order.map((id, i) =>
           el('li', {},
             el('span', { class: 'num', text: String(i + 1) }),
-            el('span', { class: 'txt', text: byId[id].text }),
+            el('span', { class: 'txt', rich: byId[id].text }),
             el('button', { type: 'button', 'aria-label': 'Subir', text: '▲', disabled: i === 0, onclick: () => move(i, -1) }),
             el('button', { type: 'button', 'aria-label': 'Bajar', text: '▼', disabled: i === order.length - 1, onclick: () => move(i, 1) })))),
         el('p', { class: 'muted small', text: ctx.get() ? 'Respuesta registrada.' : 'Su respuesta se registra al mover al menos un elemento.' }));
@@ -532,7 +544,7 @@
             type: 'button',
             class: `opt${picking === l.id ? ' picking' : ''}${pairs[l.id] ? ' paired' : ''}`,
             onclick: () => { picking = picking === l.id ? null : l.id; draw(); },
-          }, el('span', { text: l.text }), pairs[l.id] ? el('small', { text: `→ ${rightById[pairs[l.id]].text}` }) : null)));
+          }, el('span', { rich: l.text }), pairs[l.id] ? el('small', {}, '→ ', rich(rightById[pairs[l.id]].text)) : null)));
         const rightCol = el('div', { class: 'col' }, el('h3', { text: 'Enfermedad' }),
           q.data.right.map((r) => el('button', {
             type: 'button',
@@ -548,7 +560,7 @@
               ctx.set({ ...pairs });
               draw();
             },
-          }, el('span', { text: r.text }))));
+          }, el('span', { rich: r.text }))));
         box.replaceChildren(leftCol, rightCol);
       }
       draw();

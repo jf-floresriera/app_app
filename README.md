@@ -160,6 +160,8 @@ multiple('id3', 'Tema', 'Seleccione todas…', [/* opciones */], ['a', 'c']),
 
 Las preguntas paramétricas, ordenar, relacionar, gráficos y simuladores usan la forma `{ id, make(rng) }`; copie una de las existentes (`incidencia`, `ciclo`, `patogenos`, `umbral_grafico`, `simulador_fungicida`) y cambie los valores. Use siempre `rng` (nunca `Math.random`) para que cada intento sea reproducible y el servidor pueda calificar.
 
+**Nombres científicos en cursiva:** enciérrelos entre asteriscos en cualquier texto de pregunta u opción, por ejemplo `*Phytophthora infestans*` o `*Fusarium oxysporum* f. sp. *cubense*`. El navegador los muestra en cursiva.
+
 Las respuestas correctas viven solo en el servidor (`key`); el navegador nunca las recibe.
 
 Cada pregunta vale 1 punto y la nota es `puntos / total × 5`.
