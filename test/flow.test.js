@@ -145,6 +145,12 @@ test('panel del profesor: protegido por clave', async () => {
   assert.equal(reset.status, 200);
 });
 
+test('ruta de salud para el monitoreo del hosting', async () => {
+  const res = await fetch(`${base}/healthz`);
+  assert.equal(res.status, 200);
+  assert.equal(await res.text(), 'ok');
+});
+
 test('archivos estáticos: sin recorrido de rutas y con cabeceras de seguridad', async () => {
   const res = await fetch(`${base}/`);
   assert.equal(res.status, 200);

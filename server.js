@@ -367,6 +367,7 @@ function serveStatic(req, res, url) {
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
+    if (url.pathname === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain; charset=utf-8' });
     if (url.pathname.startsWith('/api/')) return await handleApi(req, res, url);
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Método no permitido');
     return serveStatic(req, res, url);
