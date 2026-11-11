@@ -9,6 +9,7 @@
  *   DURATION_MINUTES     duración del quiz (por defecto 30)
  *   MAX_VIOLATIONS       infracciones antes de anular el intento; 0 = ilimitado (por defecto 3)
  *   ALLOWED_EMAIL_DOMAIN dominio del correo institucional (por defecto unal.edu.co)
+ *   SHOW_FEEDBACK        'false' para ocultar al estudiante las respuestas correctas al terminar (por defecto true)
  *   DATA_DIR             carpeta donde se guardan los resultados (por defecto ./data)
  */
 const http = require('node:http');
@@ -21,6 +22,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const DURATION_MS = (Number(process.env.DURATION_MINUTES) || 30) * 60 * 1000;
 const MAX_VIOLATIONS = process.env.MAX_VIOLATIONS === undefined ? 3 : Number(process.env.MAX_VIOLATIONS);
+const SHOW_FEEDBACK = String(process.env.SHOW_FEEDBACK || 'true').toLowerCase() !== 'false';
 const EMAIL_DOMAIN = (process.env.ALLOWED_EMAIL_DOMAIN || 'unal.edu.co').toLowerCase();
 const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
 const DATA_FILE = path.join(DATA_DIR, 'results.json');
@@ -131,6 +133,21 @@ function recordViolation(student, type) {
   }
 }
 
+/** Revisión pregunta por pregunta: respuesta del estudiante, correcta y explicación. */
+function buildReview(student) {
+  const a = student.attempt;
+  return questionsFor(student).map((q) => {
+    const answer = a.answers[q.id] === undefined ? null : a.answers[q.id];
+    return {
+      ...Q.publicView(q),
+      answer,
+      fraction: Math.round(Q.gradeQuestion(q, answer ?? undefined) * 1000) / 1000,
+      correct: Q.correctView(q),
+      explain: q.explain,
+    };
+  });
+}
+
 function attemptState(student) {
   const a = student.attempt;
   const base = {
@@ -150,7 +167,10 @@ function attemptState(student) {
     };
   }
   if (a.status === 'submitted' || a.status === 'annulled') {
-    return { ...base, score: a.score, total: a.total, grade: a.grade };
+    const done = { ...base, score: a.score, total: a.total, grade: a.grade };
+    // Solo se muestra la revisión en intentos enviados (no en los anulados).
+    if (a.status === 'submitted' && SHOW_FEEDBACK) done.review = buildReview(student);
+    return done;
   }
   return base;
 }
@@ -337,6 +357,19 @@ async function handleApi(req, res, url) {
         detail: s.attempt.detail,
       }));
       return json(res, 200, { rows, questionIds: Q.BANK.map((b) => b.id) });
+    }
+
+    if (route === 'GET /api/admin/review') {
+      const s = db.students[String(url.searchParams.get('document') || '')];
+      if (!s) return json(res, 404, { error: 'Documento no encontrado.' });
+      if (s.attempt.status !== 'submitted' && s.attempt.status !== 'annulled') {
+        return json(res, 409, { error: 'El estudiante aún no ha enviado la evaluación.' });
+      }
+      return json(res, 200, {
+        name: s.name, email: s.email, status: s.attempt.status,
+        score: s.attempt.score, total: s.attempt.total, grade: s.attempt.grade,
+        review: buildReview(s),
+      });
     }
 
     if (route === 'POST /api/admin/reset') {

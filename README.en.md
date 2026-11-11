@@ -54,7 +54,7 @@ Open <http://localhost:3000> for students and <http://localhost:3000/admin> for 
 1. The student signs in with the three fields. The first sign-in binds that email to the ID number; a different email for the same ID is rejected.
 2. Pressing **Start** enters full screen (where the browser allows it) and starts the clock. The server owns the clock and it **never resets**.
 3. Answers are saved automatically as the student types.
-4. On submit, or when time runs out, the server grades. The student sees only the grade, never the correct answers.
+4. On submit, or when time runs out, the server grades. The student sees the grade and a **question-by-question review** with the correct answer and an explanation. If you give the quiz to several groups at different times, set `SHOW_FEEDBACK=false` so early takers cannot share answers; the instructor can always see them in `/admin`. Parametric questions have different values per student, so numeric answers cannot be copied.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
@@ -115,13 +115,14 @@ Environment variables only. See [`.env.example`](.env.example).
 | `DURATION_MINUTES` | Quiz length | `30` |
 | `MAX_VIOLATIONS` | Violations before annulment; `0` = unlimited | `3` |
 | `ALLOWED_EMAIL_DOMAIN` | Accepted email domain | `unal.edu.co` |
+| `SHOW_FEEDBACK` | `false` hides the correct answers from students after they finish | `true` |
 | `DATA_DIR` | Folder where results are stored | `./data` |
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
 ## 👩‍🏫 Instructor panel
 
-Open `/admin` and enter `ADMIN_PASSWORD`. It lists ID, name, email, status, grade, points, restarts, violations (hover for type and time), start and submit times; filters by name, email or ID; and shows the class average. **Download CSV** includes one score column per question (0 to 1). **Reopen** deletes a student's attempt so they can retake the quiz, for example after an internet outage.
+Open `/admin` and enter `ADMIN_PASSWORD`. It lists ID, name, email, status, grade, points, restarts, violations (hover for type and time), start and submit times; filters by name, email or ID; and shows the class average. **View answers** opens a per-student, question-by-question review (their answer, the correct one and an explanation). **Download CSV** includes one score column per question (0 to 1). **Reopen** deletes a student's attempt so they can retake the quiz, for example after an internet outage.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 

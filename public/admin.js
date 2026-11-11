@@ -55,6 +55,13 @@
         tr.append(td);
       });
       const act = document.createElement('td');
+      if (r.status === 'submitted' || r.status === 'annulled') {
+        const view = document.createElement('button');
+        view.className = 'btn';
+        view.textContent = 'Ver respuestas';
+        view.onclick = () => openReview(r);
+        act.append(view, ' ');
+      }
       const btn = document.createElement('button');
       btn.className = 'btn';
       btn.textContent = 'Reabrir';
@@ -69,6 +76,19 @@
       return tr;
     }));
   }
+
+  async function openReview(r) {
+    try {
+      const d = await call(`review?document=${encodeURIComponent(r.document)}`);
+      $('detail-title').textContent = `${d.name} · nota ${d.grade.toFixed(1)} (${d.score}/${d.total})`;
+      window.MieReview.render($('detail-body'), d.review);
+      $('detail').classList.remove('hidden');
+      $('detail').scrollIntoView({ behavior: 'smooth' });
+    } catch (ex) {
+      window.alert(ex.message);
+    }
+  }
+  $('detail-close').addEventListener('click', () => $('detail').classList.add('hidden'));
 
   // Evita que Excel interprete celdas como fórmulas (=, +, -, @).
   const csvCell = (v) => {

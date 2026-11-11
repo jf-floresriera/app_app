@@ -94,6 +94,58 @@ test('flujo completo: iniciar, responder, enviar', async () => {
   assert.equal(again.body.token, null);
 });
 
+test('retroalimentación: solo tras enviar, con respuesta correcta y explicación', async () => {
+  const s = student(6);
+  const token = (await call('/api/login', { method: 'POST', body: s })).body.token;
+  const started = (await call('/api/start', { method: 'POST', token })).body;
+  assert.equal(started.review, undefined); // durante el intento no se ve nada
+
+  const q0 = started.questions.find((q) => q.type === 'single');
+  await call('/api/answer', { method: 'POST', token, body: { id: q0.id, value: q0.data.options[0].id } });
+  const done = (await call('/api/submit', { method: 'POST', token })).body;
+
+  assert.equal(done.review.length, started.questions.length);
+  for (const r of done.review) {
+    assert.ok(r.explain && r.explain.length > 20, `sin explicación: ${r.id}`);
+    assert.ok(r.correct && Object.keys(r.correct).length, `sin respuesta correcta: ${r.id}`);
+    assert.ok(r.fraction >= 0 && r.fraction <= 1);
+  }
+  const mine = done.review.find((r) => r.id === q0.id);
+  assert.equal(mine.answer, q0.data.options[0].id);
+  assert.equal(mine.fraction, mine.correct.answer === mine.answer ? 1 : 0);
+
+  // La suma de la revisión coincide con la nota.
+  const sum = done.review.reduce((a, r) => a + r.fraction, 0);
+  assert.ok(Math.abs(sum - done.score) < 0.011);
+
+  // Al volver a ingresar se puede consultar de nuevo.
+  const again = (await call('/api/login', { method: 'POST', body: s })).body;
+  assert.equal(again.review.length, done.review.length);
+});
+
+test('un intento anulado no muestra revisión', async () => {
+  const s = student(7);
+  const token = (await call('/api/login', { method: 'POST', body: s })).body.token;
+  await call('/api/start', { method: 'POST', token });
+  let last;
+  for (let i = 0; i < 3; i++) last = (await call('/api/violation', { method: 'POST', token, body: { type: 'tab_hidden' } })).body;
+  assert.equal(last.status, 'annulled');
+  assert.equal(last.review, undefined);
+});
+
+test('el profesor ve la revisión de un estudiante, con clave', async () => {
+  const doc = student(6).document;
+  assert.equal((await call(`/api/admin/review?document=${doc}`)).status, 401);
+  const ok = await call(`/api/admin/review?document=${doc}`, { admin: 'clave-de-prueba' });
+  assert.equal(ok.status, 200);
+  assert.ok(ok.body.review.length >= 10);
+  const t = (await call('/api/login', { method: 'POST', body: student(8) })).body.token;
+  await call('/api/start', { method: 'POST', token: t });
+  const pending = await call(`/api/admin/review?document=${student(8).document}`, { admin: 'clave-de-prueba' });
+  assert.equal(pending.status, 409);
+  assert.equal((await call('/api/admin/review?document=0', { admin: 'clave-de-prueba' })).status, 404);
+});
+
 test('un correo distinto para el mismo documento se rechaza', async () => {
   const s = student(3);
   await call('/api/login', { method: 'POST', body: s });

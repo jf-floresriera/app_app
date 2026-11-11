@@ -182,6 +182,9 @@
       el('div', { class: 'grade' }, document.createTextNode(Number(data.grade).toFixed(1)), el('small', { text: ' / 5.0' })),
       el('div', { class: 'sub', text: `${data.score} de ${data.total} puntos` }),
     );
+    const box = $('done-review');
+    if (data.review && window.MieReview) window.MieReview.render(box, data.review);
+    else box.replaceChildren();
     show('done');
   }
 
