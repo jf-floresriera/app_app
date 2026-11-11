@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Agrocomputación (marcador de posición)">
+  <!-- MARCADOR DE POSICIÓN. Reemplace este archivo por el logotipo oficial del
+       Laboratorio de Agrocomputación conservando el nombre: public/img/logo-agrocomputacion.svg -->
+  <circle cx="32" cy="32" r="30" fill="#f2c500"/>
+  <path d="M32 54C18 46 14 30 20 16c10 2 20 10 22 22 1 6-1 12-10 16z" fill="#1b6b35"/>
+  <path d="M32 54V26" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <g fill="#fff">
+    <circle cx="32" cy="26" r="2.6"/><circle cx="25" cy="34" r="2.2"/><circle cx="38" cy="36" r="2.2"/>
+  </g>
+  <path d="M32 26l-7 8M32 26l6 10" stroke="#fff" stroke-width="1.5" fill="none"/>
+</svg>

@@ -1,0 +1,14 @@
+{
+  "name": "quiz-mie",
+  "version": "1.0.0",
+  "description": "Quiz web de Manejo Integrado de Enfermedades con control de integridad. Laboratorio de Agrocomputación, Universidad Nacional de Colombia.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": { "node": ">=18" },
+  "author": "jf-floresriera",
+  "license": "MIT",
+  "private": true
+}

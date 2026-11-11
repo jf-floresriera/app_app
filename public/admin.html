@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Panel del profesor · Quiz MIE</title>
+  <link rel="icon" href="img/logo-agrocomputacion.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <img class="logo" src="img/logo-agrocomputacion.svg" alt="Logo del Laboratorio de Agrocomputación">
+    <div class="titles">
+      <strong>Panel del profesor</strong>
+      <span>Manejo Integrado de Enfermedades · Laboratorio de Agrocomputación y Análisis Epidemiológico</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="gate" class="card">
+      <h1>Acceso del profesor</h1>
+      <form id="gate-form">
+        <label>Clave de administración
+          <input id="pw" type="password" autocomplete="current-password" required>
+        </label>
+        <p id="gate-error" class="error hidden" role="alert"></p>
+        <button class="btn primary" type="submit">Entrar</button>
+      </form>
+    </section>
+
+    <section id="panel" class="card hidden">
+      <h1>Resultados</h1>
+      <p id="summary" class="muted"></p>
+      <div class="toolbar">
+        <input id="filter" type="text" placeholder="Filtrar por nombre, correo o documento" aria-label="Filtro">
+        <button class="btn" id="refresh" type="button">Actualizar</button>
+        <button class="btn primary" id="csv" type="button">Descargar CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Documento</th><th>Nombre</th><th>Correo</th><th>Estado</th><th>Nota</th>
+              <th>Puntos</th><th>Reinicios</th><th>Infracciones</th><th>Inicio</th><th>Envío</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">Desarrollado por jf-floresriera · Software libre (licencia MIT)</footer>
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light">
+  <title>Quiz · Manejo Integrado de Enfermedades</title>
+  <link rel="icon" href="img/logo-agrocomputacion.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <img class="logo" src="img/logo-agrocomputacion.svg" alt="Logo del Laboratorio de Agrocomputación">
+    <div class="titles">
+      <strong>Manejo Integrado de Enfermedades</strong>
+      <span>Laboratorio de Agrocomputación y Análisis Epidemiológico · Facultad de Ciencias Agrarias · Universidad Nacional de Colombia, sede Bogotá</span>
+    </div>
+    <div id="timer" class="timer hidden" role="timer" aria-live="off">
+      <span class="timer-label">Tiempo</span><span id="timer-value">--:--</span>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- Ingreso -->
+    <section id="screen-login" class="screen card">
+      <h1>Ingreso a la evaluación</h1>
+      <p class="muted">Escriba sus datos tal como aparecen en su registro académico. Los tres campos son obligatorios.</p>
+      <form id="login-form" autocomplete="off" novalidate>
+        <label>Nombre completo
+          <input id="f-name" name="name" type="text" required minlength="5" maxlength="100" autocomplete="off" placeholder="Nombres y apellidos">
+        </label>
+        <label>Correo institucional
+          <input id="f-email" name="email" type="email" required autocomplete="off" inputmode="email" placeholder="usuario@unal.edu.co">
+        </label>
+        <label>Número de documento
+          <input id="f-document" name="document" type="text" required inputmode="numeric" autocomplete="off" maxlength="14" placeholder="Solo números">
+        </label>
+        <p id="login-error" class="error hidden" role="alert"></p>
+        <button class="btn primary" type="submit" id="login-btn">Ingresar</button>
+      </form>
+      <aside class="rules">
+        <h2>Reglas de la evaluación</h2>
+        <ul>
+          <li>La evaluación se realiza en una sola pestaña y en pantalla completa (cuando el dispositivo lo permite).</li>
+          <li>No se puede copiar, pegar, imprimir ni abrir otras pestañas, ventanas o navegadores.</li>
+          <li>Si sale de la evaluación, esta <strong>se reinicia</strong> con nuevos valores y queda registrada una infracción. Con 3 infracciones el intento se anula.</li>
+          <li>El tiempo no se reinicia. Las respuestas deben ser exclusivamente suyas.</li>
+        </ul>
+      </aside>
+    </section>
+
+    <!-- Instrucciones / continuar -->
+    <section id="screen-intro" class="screen card hidden">
+      <h1 id="intro-title">Hola</h1>
+      <p id="intro-text" class="muted"></p>
+      <div id="intro-notice" class="notice hidden" role="status"></div>
+      <ul class="facts" id="intro-facts"></ul>
+      <button class="btn primary" id="intro-start" type="button">Comenzar evaluación</button>
+    </section>
+
+    <!-- Evaluación -->
+    <section id="screen-quiz" class="screen hidden">
+      <div class="quiz-layout">
+        <nav id="q-nav" class="q-nav" aria-label="Preguntas"></nav>
+        <article class="card question">
+          <div class="q-meta"><span id="q-count"></span><span id="q-topic" class="chip"></span></div>
+          <h2 id="q-prompt"></h2>
+          <div id="q-body"></div>
+          <div class="q-actions">
+            <button class="btn" id="q-prev" type="button">← Anterior</button>
+            <span id="q-saved" class="muted small" aria-live="polite"></span>
+            <button class="btn" id="q-next" type="button">Siguiente →</button>
+            <button class="btn primary" id="q-finish" type="button">Finalizar y enviar</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Resultado -->
+    <section id="screen-done" class="screen card hidden">
+      <h1 id="done-title">Evaluación enviada</h1>
+      <p id="done-text" class="muted"></p>
+      <div class="result" id="done-result"></div>
+    </section>
+
+    <!-- Mensaje bloqueante (infracción, sesión desplazada, error) -->
+    <section id="screen-block" class="screen card block hidden" role="alertdialog" aria-labelledby="block-title">
+      <h1 id="block-title"></h1>
+      <p id="block-text"></p>
+      <button class="btn primary hidden" id="block-action" type="button"></button>
+    </section>
+  </main>
+
+  <!-- Confirmación de envío -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <h2 id="modal-title">¿Enviar la evaluación?</h2>
+      <p id="modal-text"></p>
+      <div class="modal-actions">
+        <button class="btn" id="modal-cancel" type="button">Volver</button>
+        <button class="btn primary" id="modal-ok" type="button">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Profesor: Joaquín Guillermo Ramírez Gil · Desarrollado por jf-floresriera · Software libre (licencia MIT)
+  </footer>
+
+  <noscript><p class="card">Esta evaluación requiere JavaScript activado.</p></noscript>
+  <script src="app.js"></script>
+</body>
+</html>

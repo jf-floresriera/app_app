@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 260" width="1200" height="260" role="img" aria-label="Quiz de Manejo Integrado de Enfermedades · Laboratorio de Agrocomputación · Universidad Nacional de Colombia">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e3b22"/>
+      <stop offset="1" stop-color="#1b6b35"/>
+    </linearGradient>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.6" fill="#8cbd1d" opacity=".22"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="260" rx="18" fill="url(#g)"/>
+  <rect width="1200" height="260" rx="18" fill="url(#dots)"/>
+  <rect y="236" width="1200" height="24" fill="#f2c500"/>
+  <rect y="236" width="1200" height="24" rx="0" fill="#f2c500"/>
+
+  <!-- hoja + nodos (marcador de posición del logo del laboratorio) -->
+  <g transform="translate(70 48) scale(2.4)">
+    <circle cx="32" cy="32" r="30" fill="#f2c500"/>
+    <path d="M32 54C18 46 14 30 20 16c10 2 20 10 22 22 1 6-1 12-10 16z" fill="#1b6b35"/>
+    <path d="M32 54V26" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <g fill="#fff"><circle cx="32" cy="26" r="2.6"/><circle cx="25" cy="34" r="2.2"/><circle cx="38" cy="36" r="2.2"/></g>
+    <path d="M32 26l-7 8M32 26l6 10" stroke="#fff" stroke-width="1.5" fill="none"/>
+  </g>
+
+  <g font-family="'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif" fill="#fff">
+    <text x="260" y="92" font-size="22" fill="#f2c500" font-weight="700" letter-spacing="3">QUIZ · UNIVERSIDAD NACIONAL DE COLOMBIA</text>
+    <text x="260" y="150" font-size="52" font-weight="800">Manejo Integrado</text>
+    <text x="260" y="206" font-size="52" font-weight="800">de Enfermedades</text>
+    <text x="1150" y="92" font-size="16" text-anchor="end" opacity=".9">Laboratorio de Agrocomputación</text>
+    <text x="1150" y="114" font-size="16" text-anchor="end" opacity=".9">y Análisis Epidemiológico</text>
+    <text x="1150" y="206" font-size="15" text-anchor="end" opacity=".85">Facultad de Ciencias Agrarias · Sede Bogotá</text>
+  </g>
+</svg>
