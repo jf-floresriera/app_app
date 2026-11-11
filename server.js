@@ -9,7 +9,7 @@
  *   DURATION_MINUTES     duración del quiz (por defecto 30)
  *   MAX_VIOLATIONS       infracciones antes de anular el intento; 0 = ilimitado (por defecto 3)
  *   ALLOWED_EMAIL_DOMAIN dominio del correo institucional (por defecto unal.edu.co)
- *   SHOW_FEEDBACK        'false' para ocultar al estudiante las respuestas correctas al terminar (por defecto true)
+ *   SHOW_FEEDBACK        'true' para que la retroalimentación nazca visible (por defecto false: la libera el profesor desde /admin)
  *   DATA_DIR             carpeta donde se guardan los resultados (por defecto ./data)
  */
 const http = require('node:http');
@@ -22,7 +22,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const DURATION_MS = (Number(process.env.DURATION_MINUTES) || 30) * 60 * 1000;
 const MAX_VIOLATIONS = process.env.MAX_VIOLATIONS === undefined ? 3 : Number(process.env.MAX_VIOLATIONS);
-const SHOW_FEEDBACK = String(process.env.SHOW_FEEDBACK || 'true').toLowerCase() !== 'false';
+const SHOW_FEEDBACK = String(process.env.SHOW_FEEDBACK || 'false').toLowerCase() === 'true';
 const EMAIL_DOMAIN = (process.env.ALLOWED_EMAIL_DOMAIN || 'unal.edu.co').toLowerCase();
 const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
 const DATA_FILE = path.join(DATA_DIR, 'results.json');
@@ -43,6 +43,9 @@ try {
 } catch (err) {
   if (err.code !== 'ENOENT') console.error('No se pudo leer', DATA_FILE, err.message);
 }
+
+// Ajustes que cambia el profesor desde /admin (se guardan junto con los resultados).
+if (!db.settings) db.settings = { feedbackReleased: SHOW_FEEDBACK };
 
 const tokenIndex = new Map(); // token -> documento
 for (const s of Object.values(db.students)) if (s.session) tokenIndex.set(s.session.token, s.document);
@@ -168,8 +171,9 @@ function attemptState(student) {
   }
   if (a.status === 'submitted' || a.status === 'annulled') {
     const done = { ...base, score: a.score, total: a.total, grade: a.grade };
-    // Solo se muestra la revisión en intentos enviados (no en los anulados).
-    if (a.status === 'submitted' && SHOW_FEEDBACK) done.review = buildReview(student);
+    done.feedbackReleased = db.settings.feedbackReleased;
+    // Solo se muestra la revisión en intentos enviados (no en los anulados) y cuando el profesor la libera.
+    if (a.status === 'submitted' && db.settings.feedbackReleased) done.review = buildReview(student);
     return done;
   }
   return base;
@@ -356,7 +360,15 @@ async function handleApi(req, res, url) {
         startedAt: s.attempt.startedAt, submittedAt: s.attempt.submittedAt,
         detail: s.attempt.detail,
       }));
-      return json(res, 200, { rows, questionIds: Q.BANK.map((b) => b.id) });
+      return json(res, 200, { rows, questionIds: Q.BANK.map((b) => b.id), settings: db.settings });
+    }
+
+    if (route === 'POST /api/admin/feedback') {
+      const body = await readBody(req);
+      if (typeof body.released !== 'boolean') return json(res, 400, { error: 'Falta el valor released (true o false).' });
+      db.settings.feedbackReleased = body.released;
+      saveNow();
+      return json(res, 200, { settings: db.settings });
     }
 
     if (route === 'GET /api/admin/review') {

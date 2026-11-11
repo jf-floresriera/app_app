@@ -102,8 +102,21 @@ test('retroalimentación: solo tras enviar, con respuesta correcta y explicació
 
   const q0 = started.questions.find((q) => q.type === 'single');
   await call('/api/answer', { method: 'POST', token, body: { id: q0.id, value: q0.data.options[0].id } });
-  const done = (await call('/api/submit', { method: 'POST', token })).body;
+  const hidden = (await call('/api/submit', { method: 'POST', token })).body;
 
+  // Por defecto el estudiante solo ve su nota; el profesor decide cuándo liberar.
+  assert.equal(hidden.review, undefined);
+  assert.equal(hidden.feedbackReleased, false);
+  assert.equal((await call('/api/login', { method: 'POST', body: s })).body.review, undefined);
+
+  // El profesor necesita clave para liberar.
+  assert.equal((await call('/api/admin/feedback', { method: 'POST', body: { released: true } })).status, 401);
+  assert.equal((await call('/api/admin/feedback', { method: 'POST', admin: 'clave-de-prueba', body: { released: 'si' } })).status, 400);
+  const rel = await call('/api/admin/feedback', { method: 'POST', admin: 'clave-de-prueba', body: { released: true } });
+  assert.equal(rel.body.settings.feedbackReleased, true);
+
+  const done = (await call('/api/login', { method: 'POST', body: s })).body;
+  assert.equal(done.feedbackReleased, true);
   assert.equal(done.review.length, started.questions.length);
   for (const r of done.review) {
     assert.ok(r.explain && r.explain.length > 20, `sin explicación: ${r.id}`);
@@ -119,8 +132,10 @@ test('retroalimentación: solo tras enviar, con respuesta correcta y explicació
   assert.ok(Math.abs(sum - done.score) < 0.011);
 
   // Al volver a ingresar se puede consultar de nuevo.
+  // Si el profesor la oculta de nuevo, deja de verse.
+  await call('/api/admin/feedback', { method: 'POST', admin: 'clave-de-prueba', body: { released: false } });
   const again = (await call('/api/login', { method: 'POST', body: s })).body;
-  assert.equal(again.review.length, done.review.length);
+  assert.equal(again.review, undefined);
 });
 
 test('un intento anulado no muestra revisión', async () => {

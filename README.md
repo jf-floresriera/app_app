@@ -65,7 +65,7 @@ npm test
 1. El estudiante ingresa con sus tres datos. El primer ingreso registra su correo para ese documento; un correo distinto con el mismo documento se rechaza.
 2. Al pulsar **Comenzar** se activa la pantalla completa (donde el navegador lo permite) y arranca el reloj. El reloj lo controla el servidor y **nunca se reinicia**.
 3. Las respuestas se guardan automáticamente mientras escribe.
-4. Al enviar, o al agotarse el tiempo, el servidor califica. El estudiante ve su nota y una **revisión pregunta por pregunta** con la respuesta correcta y una explicación. Si va a aplicar el quiz a varios grupos en momentos distintos, defina `SHOW_FEEDBACK=false` para que los primeros no compartan las respuestas; el profesor siempre puede verlas en `/admin`. Las preguntas paramétricas tienen valores distintos por estudiante, así que sus respuestas numéricas no se pueden copiar.
+4. Al enviar, o al agotarse el tiempo, el servidor califica. El estudiante ve **solo su nota**. La retroalimentación (respuesta correcta y explicación de cada pregunta) queda **oculta** hasta que el profesor la libere con un botón en `/admin`, normalmente cuando todos los grupos terminaron. Desde ese momento, quien ya envió la ve al volver a ingresar. Las preguntas paramétricas tienen valores distintos por estudiante, así que sus respuestas numéricas no se pueden copiar.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
@@ -126,7 +126,7 @@ Todo se define con variables de entorno. Hay un ejemplo en [`.env.example`](.env
 | `DURATION_MINUTES` | Duración del quiz | `30` |
 | `MAX_VIOLATIONS` | Infracciones antes de anular el intento; `0` = ilimitadas | `3` |
 | `ALLOWED_EMAIL_DOMAIN` | Dominio aceptado para el correo | `unal.edu.co` |
-| `SHOW_FEEDBACK` | `false` oculta a los estudiantes las respuestas correctas al terminar | `true` |
+| `SHOW_FEEDBACK` | `true` hace que la retroalimentación nazca visible. Normalmente se deja en `false` y el profesor la libera desde `/admin` | `false` |
 | `DATA_DIR` | Carpeta donde se guardan los resultados | `./data` |
 
 <img src="assets/divisor.svg" alt="" width="100%">
@@ -137,6 +137,7 @@ Entre a `/admin` con la clave `ADMIN_PASSWORD`.
 
 - Tabla con documento, nombre, correo, estado, nota, puntos, reinicios, infracciones, hora de inicio y de envío. Pase el cursor sobre las infracciones para ver su tipo y hora.
 - Filtro por nombre, correo o documento, y promedio del curso.
+- **Liberar a los estudiantes / Ocultar de nuevo** controla si los estudiantes ven la retroalimentación. Empieza oculta.
 - **Ver respuestas** abre, para cada estudiante, la revisión pregunta por pregunta: lo que respondió, la respuesta correcta y una explicación.
 - **Descargar CSV** con una columna de puntaje por pregunta (0 a 1), pensado para abrir en Excel o cargar en R o Python.
 - **Reabrir** borra el intento de un estudiante para que pueda presentar de nuevo (por ejemplo, tras un corte de internet).

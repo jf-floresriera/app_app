@@ -24,7 +24,31 @@
     render();
   }
 
+  function renderFeedback() {
+    const on = !!(data.settings && data.settings.feedbackReleased);
+    $('fb-status').textContent = on
+      ? 'Retroalimentación VISIBLE: los estudiantes ven las respuestas correctas al ingresar.'
+      : 'Retroalimentación OCULTA: los estudiantes solo ven su nota. Usted siempre puede verla con "Ver respuestas".';
+    $('fb-toggle').textContent = on ? 'Ocultar de nuevo' : 'Liberar a los estudiantes';
+    $('fb-toggle').dataset.released = String(on);
+  }
+
+  $('fb-toggle').addEventListener('click', async () => {
+    const release = $('fb-toggle').dataset.released !== 'true';
+    const msg = release
+      ? '¿Liberar la retroalimentación? Los estudiantes que ya enviaron podrán ver las respuestas correctas. Hágalo cuando todos los grupos hayan terminado.'
+      : '¿Ocultar la retroalimentación a los estudiantes?';
+    if (!window.confirm(msg)) return;
+    try {
+      await call('feedback', { method: 'POST', body: { released: release } });
+      await load();
+    } catch (ex) {
+      window.alert(ex.message);
+    }
+  });
+
   function render() {
+    renderFeedback();
     const q = $('filter').value.trim().toLowerCase();
     const rows = data.rows
       .filter((r) => !q || `${r.name} ${r.email} ${r.document}`.toLowerCase().includes(q))

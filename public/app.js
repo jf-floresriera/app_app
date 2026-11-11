@@ -183,8 +183,16 @@
       el('div', { class: 'sub', text: `${data.score} de ${data.total} puntos` }),
     );
     const box = $('done-review');
-    if (data.review && window.MieReview) window.MieReview.render(box, data.review);
-    else box.replaceChildren();
+    if (data.review && window.MieReview) {
+      window.MieReview.render(box, data.review);
+    } else if (data.status === 'submitted') {
+      box.replaceChildren(
+        el('div', { class: 'notice', role: 'status', text: 'La retroalimentación (respuestas correctas y explicaciones) estará disponible cuando el profesor la publique. Cuando lo haga, vuelva a ingresar con sus datos o pulse el botón.' }),
+        el('button', { class: 'btn', type: 'button', text: 'Consultar retroalimentación', onclick: () => window.location.reload() }),
+      );
+    } else {
+      box.replaceChildren();
+    }
     show('done');
   }
 
