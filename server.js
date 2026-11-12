@@ -1,12 +1,12 @@
 'use strict';
 /**
- * Servidor de parciales en línea (Laboratorio de Agrocomputación, UNAL).
+ * Servidor de exámenes en línea (Laboratorio de Agrocomputación, UNAL).
  * Sin dependencias externas: solo Node.js >= 18.
  *
  * Variables de entorno:
  *   PORT                 puerto (por defecto 3000)
  *   ADMIN_PASSWORD       clave del panel del profesor (si no se define, el panel queda desactivado)
- *   DURATION_MINUTES     duración del parcial cuando el examen no define la suya (por defecto 30)
+ *   DURATION_MINUTES     duración del examen cuando el examen no define la suya (por defecto 30)
  *   MAX_VIOLATIONS       infracciones antes de anular el intento; 0 = ilimitado (por defecto 3)
  *   ALLOWED_EMAIL_DOMAIN dominio del correo institucional (por defecto unal.edu.co)
  *   SHOW_FEEDBACK        'true' para que la retroalimentación de exámenes privados nazca visible (por defecto false: la libera el profesor desde /admin)
@@ -44,7 +44,7 @@ try {
   if (err.code !== 'ENOENT') console.error('No se pudo leer', DATA_FILE, err.message);
 }
 
-// Cada registro es (examen, documento): db.students["parcial:1012345678"].
+// Cada registro es (examen, documento): db.students["examen:1012345678"].
 const keyOf = (examId, doc) => `${examId}:${doc}`;
 
 // Ajustes que cambia el profesor desde /admin (se guardan junto con los resultados).
@@ -61,6 +61,19 @@ for (const [k, st] of Object.entries(db.students)) {
     db.students[keyOf(st.exam, st.document)] = st;
     delete db.students[k];
   }
+}
+
+// Migración: el examen privado se llamaba "parcial" internamente; ahora es "examen".
+for (const [k, st] of Object.entries(db.students)) {
+  if (st.exam === 'parcial') {
+    st.exam = 'examen';
+    db.students[keyOf('examen', st.document)] = st;
+    delete db.students[k];
+  }
+}
+if (db.settings.feedback.parcial !== undefined) {
+  db.settings.feedback.examen = db.settings.feedback.parcial;
+  delete db.settings.feedback.parcial;
 }
 
 /** ¿Pueden los estudiantes ver las respuestas correctas de este examen? */
@@ -465,7 +478,7 @@ function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === '/') rel = '/index.html';
   if (rel === '/admin') rel = '/admin.html';
-  else if (/^\/[a-z0-9_-]+$/.test(rel) && Q.getExam(rel.slice(1))) rel = '/index.html'; // /prueba, /parcial
+  else if (/^\/[a-z0-9_-]+$/.test(rel) && Q.getExam(rel.slice(1))) rel = '/index.html'; // /prueba, /examen
   const file = path.normalize(path.join(PUBLIC_DIR, rel));
   if (!file.startsWith(PUBLIC_DIR + path.sep)) return send(res, 403, 'Prohibido');
   fs.readFile(file, (err, data) => {
@@ -490,7 +503,7 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`Parcial en línea escuchando en http://localhost:${PORT}`);
+    console.log(`Examen en línea escuchando en http://localhost:${PORT}`);
     for (const e of Object.values(Q.EXAMS)) {
       console.log(`  Examen "${e.id}": ${e.public ? 'público (ejemplo)' : 'PRIVADO'}, ${e.bank.length} preguntas${e.id === Q.DEFAULT_EXAM ? '  <- ruta /' : `  <- ruta /${e.id}`}`);
     }

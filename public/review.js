@@ -28,7 +28,7 @@
   }
 
   const num = (n) => Number(n).toLocaleString('es-CO', { maximumFractionDigits: 2 });
-  const points = (f) => (f === 1 ? 'Correcta' : f === 0 ? 'Incorrecta' : 'Parcial');
+  const points = (f) => (f === 1 ? 'Correcta' : f === 0 ? 'Incorrecta' : 'Incompleta');
   const optionText = (q, id) => q.data.options.find((o) => o.id === id)?.text ?? '';
 
   /** Una línea "Etiqueta: valor" con marca de acierto opcional. */

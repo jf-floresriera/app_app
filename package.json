@@ -1,7 +1,7 @@
 {
-  "name": "parcial-app",
+  "name": "examen-app",
   "version": "1.0.0",
-  "description": "Parciales web con control de integridad. Laboratorio de Agrocomputación y Análisis Epidemiológico, Universidad Nacional de Colombia.",
+  "description": "Exámenes web con control de integridad. Laboratorio de Agrocomputación y Análisis Epidemiológico, Universidad Nacional de Colombia.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

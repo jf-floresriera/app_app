@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="Parciales en línea · Laboratorio de Agrocomputación · Universidad Nacional de Colombia" width="100%">
+<img src="assets/banner.svg" alt="Exámenes en línea · Laboratorio de Agrocomputación · Universidad Nacional de Colombia" width="100%">
 
 <p>
   <img src="https://img.shields.io/badge/node-%E2%89%A518-1b6b35?style=for-the-badge&amp;labelColor=0e3b22&amp;logo=nodedotjs&amp;logoColor=white" alt="Node.js 18+">
@@ -17,7 +17,7 @@
 
 ## 📖 Qué es
 
-Aplicación web para aplicar **parciales en línea** (incluye un parcial de prueba de **Manejo Integrado de Enfermedades**) (profesor **Joaquín Guillermo Ramírez Gil**), del Departamento de Agronomía, Facultad de Ciencias Agrarias, Universidad Nacional de Colombia, sede Bogotá. Fue desarrollada por **jf-floresriera** para el **Laboratorio de Agrocomputación y Análisis Epidemiológico**.
+Aplicación web para aplicar **exámenes en línea** (incluye un examen de prueba de **Manejo Integrado de Enfermedades**) del profesor **Joaquín Guillermo Ramírez Gil**, del Departamento de Agronomía, Facultad de Ciencias Agrarias, Universidad Nacional de Colombia, sede Bogotá. Fue desarrollada por **jf-floresriera** para el **Laboratorio de Agrocomputación y Análisis Epidemiológico**.
 
 Funciona en cualquier navegador moderno (computador, tableta o celular), es **software libre** y no requiere pagar licencias ni servicios: es un único servidor Node.js sin dependencias externas.
 
@@ -142,7 +142,7 @@ Para más protección, haga el repositorio **privado** (GitHub → Settings → 
 | Ruta | Examen | Visibilidad |
 |---|---|---|
 | `/prueba` | **Examen de prueba**: el banco de ejemplo de Manejo Integrado de Enfermedades (`lib/questions.js`) | Público. La retroalimentación se ve siempre, para que los estudiantes practiquen y comprueben su equipo |
-| `/` | **Examen vigente (parcial)**: el que se carga de forma privada con `QUESTIONS_JSON_B64` | Privado. La retroalimentación la libera el profesor |
+| `/` | **Examen vigente**: el que se carga de forma privada con `QUESTIONS_JSON_B64` | Privado. La retroalimentación la libera el profesor |
 
 Si no se define `QUESTIONS_JSON_B64`, la ruta `/` abre el examen de prueba. Cada examen tiene sus propios intentos, notas, tiempo y retroalimentación, y un estudiante puede presentar ambos sin que se interfieran. En `/admin` el selector **Examen** cambia entre los dos (resultados, CSV, reabrir intento y liberar retroalimentación).
 
@@ -158,7 +158,7 @@ Todo se define con variables de entorno. Hay un ejemplo en [`.env.example`](.env
 |---|---|---|
 | `PORT` | Puerto del servidor | `3000` |
 | `ADMIN_PASSWORD` | Clave del panel del profesor | sin definir (panel desactivado) |
-| `DURATION_MINUTES` | Duración del parcial cuando el examen no define la suya | `30` |
+| `DURATION_MINUTES` | Duración del examen cuando el examen no define la suya | `30` |
 | `MAX_VIOLATIONS` | Infracciones antes de anular el intento; `0` = ilimitadas | `3` |
 | `ALLOWED_EMAIL_DOMAIN` | Dominio aceptado para el correo | `unal.edu.co` |
 | `SHOW_FEEDBACK` | `true` hace que la retroalimentación nazca visible. Normalmente se deja en `false` y el profesor la libera desde `/admin` | `false` |
@@ -213,19 +213,19 @@ La aplicación necesita ejecutar Node.js; no sirve alojarla solo como página es
 | Opción | Cuándo conviene |
 |---|---|
 | **Servidor de la universidad o del laboratorio** | Es la mejor opción: los datos quedan en la institución y el disco es persistente |
-| **Cualquier servicio con plan gratuito que ejecute Node.js o Docker** | Para pruebas y parciales cortos. Revise sus límites vigentes |
-| **Su computador en una red local** | Parcial presencial en sala: `npm start` y comparta la IP del equipo |
+| **Cualquier servicio con plan gratuito que ejecute Node.js o Docker** | Para pruebas y exámenes cortos. Revise sus límites vigentes |
+| **Su computador en una red local** | Examen presencial en sala: `npm start` y comparta la IP del equipo |
 
 ```bash
 # Con Docker
-docker build -t parcial-app .
-docker run -p 3000:3000 -e ADMIN_PASSWORD="una-clave-larga" -v parcial-data:/data parcial-app
+docker build -t examen-app .
+docker run -p 3000:3000 -e ADMIN_PASSWORD="una-clave-larga" -v examen-data:/data examen-app
 ```
 
 **Importante:**
 
 - Sirva siempre la aplicación por **HTTPS** (protege los datos personales de los estudiantes en tránsito). Un proxy como Nginx, Caddy o el del propio servicio de alojamiento lo resuelve.
-- Muchos planes gratuitos tienen **disco efímero**: al reiniciarse el servicio se pierde `data/results.json`. **Descargue el CSV** al terminar cada parcial, o use un volumen persistente.
+- Muchos planes gratuitos tienen **disco efímero**: al reiniciarse el servicio se pierde `data/results.json`. **Descargue el CSV** al terminar cada examen, o use un volumen persistente.
 - Si el servicio queda detrás de un proxy, los estudiantes de una misma red comparten dirección IP; la aplicación no limita por IP, solo por documento.
 
 <img src="assets/divisor.svg" alt="" width="100%">

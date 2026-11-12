@@ -47,7 +47,7 @@
   /* ---------------------------------------------------------------------- */
   /* Estado                                                                  */
   /* ---------------------------------------------------------------------- */
-  // El examen se elige por la ruta: / (examen vigente), /prueba (examen de prueba), /parcial...
+  // El examen se elige por la ruta: / (examen vigente), /prueba (examen de prueba), /examen...
   const pathExam = (/^\/([a-z0-9_-]+)\/?$/.exec(window.location.pathname) || [])[1];
   const examRequested = pathExam && pathExam !== 'admin' ? pathExam : null;
   const TOKEN_KEY = `mie_token:${examRequested || 'default'}`;
