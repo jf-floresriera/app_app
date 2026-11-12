@@ -1,12 +1,12 @@
 'use strict';
 /**
- * Servidor del quiz de Manejo Integrado de Enfermedades.
+ * Servidor de parciales en línea (Laboratorio de Agrocomputación, UNAL).
  * Sin dependencias externas: solo Node.js >= 18.
  *
  * Variables de entorno:
  *   PORT                 puerto (por defecto 3000)
  *   ADMIN_PASSWORD       clave del panel del profesor (si no se define, el panel queda desactivado)
- *   DURATION_MINUTES     duración del quiz (por defecto 30)
+ *   DURATION_MINUTES     duración del parcial cuando el examen no define la suya (por defecto 30)
  *   MAX_VIOLATIONS       infracciones antes de anular el intento; 0 = ilimitado (por defecto 3)
  *   ALLOWED_EMAIL_DOMAIN dominio del correo institucional (por defecto unal.edu.co)
  *   SHOW_FEEDBACK        'true' para que la retroalimentación de exámenes privados nazca visible (por defecto false: la libera el profesor desde /admin)
@@ -490,7 +490,7 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`Quiz escuchando en http://localhost:${PORT}`);
+    console.log(`Parcial en línea escuchando en http://localhost:${PORT}`);
     for (const e of Object.values(Q.EXAMS)) {
       console.log(`  Examen "${e.id}": ${e.public ? 'público (ejemplo)' : 'PRIVADO'}, ${e.bank.length} preguntas${e.id === Q.DEFAULT_EXAM ? '  <- ruta /' : `  <- ruta /${e.id}`}`);
     }

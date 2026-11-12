@@ -295,7 +295,7 @@ test('/prueba y / sirven la aplicación y cada ruta muestra su título', async (
   const a = await call('/api/config');
   const b = await call('/api/config?exam=prueba');
   assert.equal(a.body.title, 'Parcial de prueba (tests)');
-  assert.match(b.body.title, /Examen de prueba/);
+  assert.match(b.body.title, /Parcial de prueba/);
   assert.equal((await call('/api/config?exam=zzz')).status, 404);
 });
 
