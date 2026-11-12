@@ -5,7 +5,12 @@
       "type": "single",
       "topic": "Fundamentos",
       "prompt": "¿Qué organismo causa la gota de la papa?",
-      "options": ["*Phytophthora infestans*", "*Fusarium oxysporum*", "*Hemileia vastatrix*", "*Botrytis cinerea*"],
+      "options": [
+        "*Phytophthora infestans*",
+        "*Fusarium oxysporum*",
+        "*Hemileia vastatrix*",
+        "*Botrytis cinerea*"
+      ],
       "answer": 0,
       "explain": "La gota o tizón tardío de la papa la causa *Phytophthora infestans*."
     },
@@ -13,16 +18,86 @@
       "type": "multiple",
       "topic": "Control",
       "prompt": "Seleccione TODAS las prácticas de control cultural.",
-      "options": ["Rotación de cultivos", "Eliminar residuos infectados", "Aplicar un fungicida", "Mejorar el drenaje"],
-      "answers": [0, 1, 3]
+      "options": [
+        "Rotación de cultivos",
+        "Eliminar residuos infectados",
+        "Aplicar un fungicida",
+        "Mejorar el drenaje"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ]
     },
-    { "type": "truefalse", "topic": "Fundamentos", "prompt": "Un oomiceto es un hongo verdadero.", "answer": false },
-    { "type": "numeric", "topic": "Cuantificación", "prompt": "Se evaluaron 80 plantas y 12 estaban enfermas. Calcule la incidencia.", "unit": "%", "answer": 15, "tol": 0.1 },
-    { "type": "text", "topic": "Resistencia", "prompt": "Nombre el tipo de resistencia controlada por muchos genes de efecto menor (una palabra).", "accepted": ["horizontal", "cuantitativa", "poligenica"] },
-    { "type": "ordering", "topic": "Ciclo", "prompt": "Ordene las etapas del ciclo de la enfermedad.", "items": ["Inoculación", "Penetración", "Infección", "Reproducción", "Diseminación"] },
-    { "type": "matching", "topic": "Patosistemas", "prompt": "Relacione cada patógeno con su enfermedad.", "pairs": [["*Hemileia vastatrix*", "Roya del café"], ["*Moniliophthora roreri*", "Moniliasis del cacao"]] },
-    { "builtin": "umbral_grafico" },
-    { "builtin": "simulador_fungicida" },
-    { "builtin": "audpc" }
+    {
+      "type": "truefalse",
+      "topic": "Fundamentos",
+      "prompt": "Un oomiceto es un hongo verdadero.",
+      "answer": false
+    },
+    {
+      "type": "numeric",
+      "topic": "Cuantificación",
+      "prompt": "Se evaluaron 80 plantas y 12 estaban enfermas. Calcule la incidencia.",
+      "unit": "%",
+      "answer": 15,
+      "tol": 0.1
+    },
+    {
+      "type": "text",
+      "topic": "Resistencia",
+      "prompt": "Nombre el tipo de resistencia controlada por muchos genes de efecto menor (una palabra).",
+      "accepted": [
+        "horizontal",
+        "cuantitativa",
+        "poligenica"
+      ]
+    },
+    {
+      "type": "ordering",
+      "topic": "Ciclo",
+      "prompt": "Ordene las etapas del ciclo de la enfermedad.",
+      "items": [
+        "Inoculación",
+        "Penetración",
+        "Infección",
+        "Reproducción",
+        "Diseminación"
+      ]
+    },
+    {
+      "type": "matching",
+      "topic": "Patosistemas",
+      "prompt": "Relacione cada patógeno con su enfermedad.",
+      "pairs": [
+        [
+          "*Hemileia vastatrix*",
+          "Roya del café"
+        ],
+        [
+          "*Moniliophthora roreri*",
+          "Moniliasis del cacao"
+        ]
+      ],
+      "distractors": [
+        "Opción que sobra y no tiene pareja"
+      ]
+    },
+    {
+      "builtin": "umbral_grafico"
+    },
+    {
+      "builtin": "simulador_fungicida"
+    },
+    {
+      "builtin": "audpc"
+    }
+  ],
+  "course": "Nombre de la asignatura",
+  "durationMinutes": 20,
+  "shuffleQuestions": true,
+  "intro": [
+    "Instrucciones que se muestran antes de comenzar (una por línea)."
   ]
 }

@@ -2,7 +2,8 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   let password = '';
-  let data = { rows: [], questionIds: [] };
+  let data = { rows: [], questionIds: [], exams: [], settings: {} };
+  let currentExam = '';
 
   const STATUS = { ready: 'Sin iniciar', in_progress: 'En curso', submitted: 'Enviado', annulled: 'Anulado' };
   const fmtDate = (ms) => (ms ? new Date(ms).toLocaleString('es-CO', { hour12: false }) : '');
@@ -20,12 +21,28 @@
   }
 
   async function load() {
-    data = await call('results');
+    data = await call(`results${currentExam ? `?exam=${encodeURIComponent(currentExam)}` : ''}`);
+    currentExam = data.exam;
+    const sel = $('exam-select');
+    sel.replaceChildren(...data.exams.map((e) => {
+      const o = document.createElement('option');
+      o.value = e.id;
+      o.textContent = `${e.name}${e.public ? ' (público)' : ' (privado)'}${e.id === data.defaultExam ? ' · ruta /' : ` · ruta /${e.id}`}`;
+      o.selected = e.id === currentExam;
+      return o;
+    }));
     render();
   }
+  $('exam-select').addEventListener('change', (ev) => { currentExam = ev.target.value; load(); });
 
   function renderFeedback() {
     const on = !!(data.settings && data.settings.feedbackReleased);
+    const fixed = !!(data.settings && data.settings.alwaysVisible);
+    $('fb-toggle').classList.toggle('hidden', fixed);
+    if (fixed) {
+      $('fb-status').textContent = 'Examen de prueba: la retroalimentación es siempre visible para los estudiantes.';
+      return;
+    }
     $('fb-status').textContent = on
       ? 'Retroalimentación VISIBLE: los estudiantes ven las respuestas correctas al ingresar.'
       : 'Retroalimentación OCULTA: los estudiantes solo ven su nota. Usted siempre puede verla con "Ver respuestas".';
@@ -40,7 +57,7 @@
       : '¿Ocultar la retroalimentación a los estudiantes?';
     if (!window.confirm(msg)) return;
     try {
-      await call('feedback', { method: 'POST', body: { released: release } });
+      await call('feedback', { method: 'POST', body: { exam: currentExam, released: release } });
       await load();
     } catch (ex) {
       window.alert(ex.message);
@@ -92,7 +109,7 @@
       btn.title = 'Borra el intento para que el estudiante pueda presentar de nuevo';
       btn.onclick = async () => {
         if (!window.confirm(`¿Reabrir el intento de ${r.name}? Se borrará su resultado actual.`)) return;
-        await call('reset', { method: 'POST', body: { document: r.document } });
+        await call('reset', { method: 'POST', body: { exam: currentExam, document: r.document } });
         load();
       };
       act.append(btn);
@@ -103,7 +120,7 @@
 
   async function openReview(r) {
     try {
-      const d = await call(`review?document=${encodeURIComponent(r.document)}`);
+      const d = await call(`review?exam=${encodeURIComponent(currentExam)}&document=${encodeURIComponent(r.document)}`);
       $('detail-title').textContent = `${d.name} · nota ${d.grade.toFixed(1)} (${d.score}/${d.total})`;
       window.MieReview.render($('detail-body'), d.review);
       $('detail').classList.remove('hidden');
@@ -135,7 +152,7 @@
     const blob = new Blob([`\ufeff${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `resultados-mie-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `resultados-${currentExam}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
   }

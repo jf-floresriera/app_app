@@ -118,6 +118,17 @@ Students never receive correct answers during the attempt; after submitting they
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
+## 🗂 Two exams in one app
+
+| Route | Exam | Visibility |
+|---|---|---|
+| `/prueba` | **Practice exam**: the bundled sample bank (`lib/questions.js`) | Public. Feedback always visible so students can practise and check their device |
+| `/` | **Current exam (midterm)**: loaded privately via `QUESTIONS_JSON_B64` | Private. The instructor releases feedback |
+
+Without `QUESTIONS_JSON_B64`, `/` opens the practice exam. Each exam has its own attempts, grades, timer and feedback; one student can take both without interference. In `/admin` the **Exam** selector switches between them. Optional fields in the private exam file: `title`, `course`, `intro` (instructions list), `durationMinutes`, `shuffleQuestions` (`false` keeps question order; options are always shuffled), and `distractors` in matching questions. Write formulas as plain Unicode; use `∗` instead of `*` inside a formula because the plain asterisk marks italics.
+
+<img src="assets/divisor.svg" alt="" width="100%">
+
 ## ⚙ Configuration
 
 Environment variables only. See [`.env.example`](.env.example).

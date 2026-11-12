@@ -9,7 +9,7 @@
  *   DURATION_MINUTES     duración del quiz (por defecto 30)
  *   MAX_VIOLATIONS       infracciones antes de anular el intento; 0 = ilimitado (por defecto 3)
  *   ALLOWED_EMAIL_DOMAIN dominio del correo institucional (por defecto unal.edu.co)
- *   SHOW_FEEDBACK        'true' para que la retroalimentación nazca visible (por defecto false: la libera el profesor desde /admin)
+ *   SHOW_FEEDBACK        'true' para que la retroalimentación de exámenes privados nazca visible (por defecto false: la libera el profesor desde /admin)
  *   DATA_DIR             carpeta donde se guardan los resultados (por defecto ./data)
  */
 const http = require('node:http');
@@ -20,7 +20,7 @@ const Q = require('./lib/questions');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
-const DURATION_MS = (Number(process.env.DURATION_MINUTES) || 30) * 60 * 1000;
+const DEFAULT_DURATION_MS = (Number(process.env.DURATION_MINUTES) || 30) * 60 * 1000;
 const MAX_VIOLATIONS = process.env.MAX_VIOLATIONS === undefined ? 3 : Number(process.env.MAX_VIOLATIONS);
 const SHOW_FEEDBACK = String(process.env.SHOW_FEEDBACK || 'false').toLowerCase() === 'true';
 const EMAIL_DOMAIN = (process.env.ALLOWED_EMAIL_DOMAIN || 'unal.edu.co').toLowerCase();
@@ -44,11 +44,40 @@ try {
   if (err.code !== 'ENOENT') console.error('No se pudo leer', DATA_FILE, err.message);
 }
 
-// Ajustes que cambia el profesor desde /admin (se guardan junto con los resultados).
-if (!db.settings) db.settings = { feedbackReleased: SHOW_FEEDBACK };
+// Cada registro es (examen, documento): db.students["parcial:1012345678"].
+const keyOf = (examId, doc) => `${examId}:${doc}`;
 
-const tokenIndex = new Map(); // token -> documento
-for (const s of Object.values(db.students)) if (s.session) tokenIndex.set(s.session.token, s.document);
+// Ajustes que cambia el profesor desde /admin (se guardan junto con los resultados).
+if (!db.settings) db.settings = {};
+if (!db.settings.feedback) db.settings.feedback = {};
+if (db.settings.feedbackReleased !== undefined) { // formato anterior: un solo examen
+  if (db.settings.feedback[Q.DEFAULT_EXAM] === undefined) db.settings.feedback[Q.DEFAULT_EXAM] = db.settings.feedbackReleased;
+  delete db.settings.feedbackReleased;
+}
+// Migración: registros guardados sin examen pasan al examen por defecto.
+for (const [k, st] of Object.entries(db.students)) {
+  if (!k.includes(':')) {
+    st.exam = st.exam || Q.DEFAULT_EXAM;
+    db.students[keyOf(st.exam, st.document)] = st;
+    delete db.students[k];
+  }
+}
+
+/** ¿Pueden los estudiantes ver las respuestas correctas de este examen? */
+function feedbackReleased(examId) {
+  const exam = Q.getExam(examId);
+  if (exam && exam.public) return true; // el examen de prueba es público
+  const v = db.settings.feedback[examId];
+  return v === undefined ? SHOW_FEEDBACK : v === true;
+}
+
+const durationMs = (student) => {
+  const exam = Q.getExam(student.exam);
+  return exam && exam.durationMinutes ? exam.durationMinutes * 60 * 1000 : DEFAULT_DURATION_MS;
+};
+
+const tokenIndex = new Map(); // token -> clave del registro
+for (const [k, st] of Object.entries(db.students)) if (st.session) tokenIndex.set(st.session.token, k);
 
 let saveTimer = null;
 function saveNow() {
@@ -79,7 +108,7 @@ function safeEqual(a, b) {
 }
 
 function questionsFor(student) {
-  return Q.buildQuestions(student.attempt.seed);
+  return Q.buildQuestions(student.attempt.seed, student.exam);
 }
 
 function newAttempt() {
@@ -157,10 +186,13 @@ function attemptState(student) {
     status: a.status,
     name: student.name,
     document: student.document,
+    exam: student.exam,
+    examTitle: Q.getExam(student.exam).title,
+    examIntro: Q.getExam(student.exam).intro,
     restarts: a.restarts,
     violations: a.violations.length,
     maxViolations: MAX_VIOLATIONS,
-    durationMs: DURATION_MS,
+    durationMs: durationMs(student),
   };
   if (a.status === 'in_progress') {
     return {
@@ -172,9 +204,10 @@ function attemptState(student) {
   }
   if (a.status === 'submitted' || a.status === 'annulled') {
     const done = { ...base, score: a.score, total: a.total, grade: a.grade };
-    done.feedbackReleased = db.settings.feedbackReleased;
+    const released = feedbackReleased(student.exam);
+    done.feedbackReleased = released;
     // Solo se muestra la revisión en intentos enviados (no en los anulados) y cuando el profesor la libera.
-    if (a.status === 'submitted' && db.settings.feedbackReleased) done.review = buildReview(student);
+    if (a.status === 'submitted' && released) done.review = buildReview(student);
     return done;
   }
   return base;
@@ -230,8 +263,8 @@ function readBody(req) {
 function authStudent(req) {
   const m = /^Bearer ([a-f0-9]{64})$/.exec(req.headers.authorization || '');
   if (!m) return { error: 'no_session' };
-  const doc = tokenIndex.get(m[1]);
-  const student = doc && db.students[doc];
+  const key = tokenIndex.get(m[1]);
+  const student = key && db.students[key];
   if (!student || !student.session || student.session.token !== m[1]) return { error: 'displaced' };
   return { student };
 }
@@ -258,15 +291,25 @@ function validateLogin(body) {
 async function handleApi(req, res, url) {
   const route = `${req.method} ${url.pathname}`;
 
+  if (route === 'GET /api/config') {
+    const exam = Q.getExam(url.searchParams.get('exam') || Q.DEFAULT_EXAM);
+    if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+    return json(res, 200, { id: exam.id, title: exam.title, course: exam.course });
+  }
+
   /* ---- estudiantes ---- */
   if (route === 'POST /api/login') {
-    const v = validateLogin(await readBody(req));
+    const body = await readBody(req);
+    const examId = body.exam ? String(body.exam) : Q.DEFAULT_EXAM;
+    if (!Q.getExam(examId)) return json(res, 404, { error: 'Examen no encontrado.' });
+    const v = validateLogin(body);
     if (v.error) return json(res, 400, { error: v.error });
 
-    let student = db.students[v.document];
+    const key = keyOf(examId, v.document);
+    let student = db.students[key];
     if (!student) {
-      student = db.students[v.document] = {
-        document: v.document, name: v.name, email: v.email, createdAt: Date.now(), session: null, attempt: newAttempt(),
+      student = db.students[key] = {
+        exam: examId, document: v.document, name: v.name, email: v.email, createdAt: Date.now(), session: null, attempt: newAttempt(),
       };
     } else if (student.email !== v.email) {
       return json(res, 403, { error: 'El correo no coincide con el registrado para este documento. Si es un error, avise al profesor.' });
@@ -282,7 +325,7 @@ async function handleApi(req, res, url) {
     const wasActive = a.status === 'in_progress' && student.session && Date.now() - student.session.lastSeen < ACTIVE_WINDOW_MS;
     if (student.session) tokenIndex.delete(student.session.token);
     student.session = { token: newToken(), lastSeen: Date.now() };
-    tokenIndex.set(student.session.token, student.document);
+    tokenIndex.set(student.session.token, key);
 
     if (wasActive) {
       // Abrir una pestaña nueva en el mismo navegador ya generó una infracción
@@ -314,7 +357,7 @@ async function handleApi(req, res, url) {
       if (a.status === 'ready') {
         a.status = 'in_progress';
         a.startedAt = Date.now();
-        a.deadline = a.startedAt + DURATION_MS;
+        a.deadline = a.startedAt + durationMs(student);
         saveNow();
       }
       return json(res, 200, attemptState(student));
@@ -351,45 +394,65 @@ async function handleApi(req, res, url) {
     if (!ADMIN_PASSWORD) return json(res, 503, { error: 'Panel desactivado: defina ADMIN_PASSWORD en el servidor.' });
     if (!isAdmin(req)) return json(res, 401, { error: 'Clave incorrecta.' });
 
+    const examParam = url.searchParams.get('exam');
+    const examOf = (v) => Q.getExam(v || Q.DEFAULT_EXAM);
+
     if (route === 'GET /api/admin/results') {
-      Object.values(db.students).forEach(expireIfNeeded);
-      const rows = Object.values(db.students).map((s) => ({
-        document: s.document, name: s.name, email: s.email,
-        status: s.attempt.status, score: s.attempt.score, total: s.attempt.total, grade: s.attempt.grade,
-        restarts: s.attempt.restarts,
-        violations: s.attempt.violations,
-        startedAt: s.attempt.startedAt, submittedAt: s.attempt.submittedAt,
-        detail: s.attempt.detail,
+      const exam = examOf(examParam);
+      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+      const mine = Object.values(db.students).filter((st) => st.exam === exam.id);
+      mine.forEach(expireIfNeeded);
+      const rows = mine.map((st) => ({
+        document: st.document, name: st.name, email: st.email,
+        status: st.attempt.status, score: st.attempt.score, total: st.attempt.total, grade: st.attempt.grade,
+        restarts: st.attempt.restarts,
+        violations: st.attempt.violations,
+        startedAt: st.attempt.startedAt, submittedAt: st.attempt.submittedAt,
+        detail: st.attempt.detail,
       }));
-      return json(res, 200, { rows, questionIds: Q.BANK.map((b) => b.id), settings: db.settings });
+      return json(res, 200, {
+        rows,
+        exam: exam.id,
+        exams: Object.values(Q.EXAMS).map((e) => ({ id: e.id, name: e.name, title: e.title, public: e.public })),
+        defaultExam: Q.DEFAULT_EXAM,
+        questionIds: exam.bank.map((b) => b.id),
+        settings: { feedbackReleased: feedbackReleased(exam.id), alwaysVisible: !!exam.public },
+      });
     }
 
     if (route === 'POST /api/admin/feedback') {
       const body = await readBody(req);
+      const exam = examOf(body.exam);
+      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+      if (exam.public) return json(res, 400, { error: 'El examen de prueba es público: su retroalimentación siempre es visible.' });
       if (typeof body.released !== 'boolean') return json(res, 400, { error: 'Falta el valor released (true o false).' });
-      db.settings.feedbackReleased = body.released;
+      db.settings.feedback[exam.id] = body.released;
       saveNow();
-      return json(res, 200, { settings: db.settings });
+      return json(res, 200, { settings: { feedbackReleased: feedbackReleased(exam.id), alwaysVisible: false } });
     }
 
     if (route === 'GET /api/admin/review') {
-      const s = db.students[String(url.searchParams.get('document') || '')];
-      if (!s) return json(res, 404, { error: 'Documento no encontrado.' });
-      if (s.attempt.status !== 'submitted' && s.attempt.status !== 'annulled') {
+      const exam = examOf(examParam);
+      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+      const st = db.students[keyOf(exam.id, String(url.searchParams.get('document') || ''))];
+      if (!st) return json(res, 404, { error: 'Documento no encontrado.' });
+      if (st.attempt.status !== 'submitted' && st.attempt.status !== 'annulled') {
         return json(res, 409, { error: 'El estudiante aún no ha enviado la evaluación.' });
       }
       return json(res, 200, {
-        name: s.name, email: s.email, status: s.attempt.status,
-        score: s.attempt.score, total: s.attempt.total, grade: s.attempt.grade,
-        review: buildReview(s),
+        name: st.name, email: st.email, status: st.attempt.status,
+        score: st.attempt.score, total: st.attempt.total, grade: st.attempt.grade,
+        review: buildReview(st),
       });
     }
 
     if (route === 'POST /api/admin/reset') {
       const body = await readBody(req);
-      const s = db.students[String(body.document || '')];
-      if (!s) return json(res, 404, { error: 'Documento no encontrado.' });
-      s.attempt = newAttempt();
+      const exam = examOf(body.exam);
+      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+      const st = db.students[keyOf(exam.id, String(body.document || ''))];
+      if (!st) return json(res, 404, { error: 'Documento no encontrado.' });
+      st.attempt = newAttempt();
       saveNow();
       return json(res, 200, { ok: true });
     }
@@ -402,6 +465,7 @@ function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === '/') rel = '/index.html';
   if (rel === '/admin') rel = '/admin.html';
+  else if (/^\/[a-z0-9_-]+$/.test(rel) && Q.getExam(rel.slice(1))) rel = '/index.html'; // /prueba, /parcial
   const file = path.normalize(path.join(PUBLIC_DIR, rel));
   if (!file.startsWith(PUBLIC_DIR + path.sep)) return send(res, 403, 'Prohibido');
   fs.readFile(file, (err, data) => {
@@ -426,8 +490,10 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`Quiz MIE escuchando en http://localhost:${PORT}`);
-    console.log(`Banco de preguntas: ${Q.SOURCE === 'private' ? 'PRIVADO' : 'de ejemplo'} (${Q.BANK.length} preguntas)`);
+    console.log(`Quiz escuchando en http://localhost:${PORT}`);
+    for (const e of Object.values(Q.EXAMS)) {
+      console.log(`  Examen "${e.id}": ${e.public ? 'público (ejemplo)' : 'PRIVADO'}, ${e.bank.length} preguntas${e.id === Q.DEFAULT_EXAM ? '  <- ruta /' : `  <- ruta /${e.id}`}`);
+    }
     if (!ADMIN_PASSWORD) console.log('Aviso: ADMIN_PASSWORD no definido; el panel del profesor está desactivado.');
   });
 }

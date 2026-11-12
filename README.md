@@ -137,6 +137,19 @@ Para más protección, haga el repositorio **privado** (GitHub → Settings → 
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
+## 🗂 Dos exámenes en la misma aplicación
+
+| Ruta | Examen | Visibilidad |
+|---|---|---|
+| `/prueba` | **Examen de prueba**: el banco de ejemplo de Manejo Integrado de Enfermedades (`lib/questions.js`) | Público. La retroalimentación se ve siempre, para que los estudiantes practiquen y comprueben su equipo |
+| `/` | **Examen vigente (parcial)**: el que se carga de forma privada con `QUESTIONS_JSON_B64` | Privado. La retroalimentación la libera el profesor |
+
+Si no se define `QUESTIONS_JSON_B64`, la ruta `/` abre el examen de prueba. Cada examen tiene sus propios intentos, notas, tiempo y retroalimentación, y un estudiante puede presentar ambos sin que se interfieran. En `/admin` el selector **Examen** cambia entre los dos (resultados, CSV, reabrir intento y liberar retroalimentación).
+
+Campos opcionales del archivo del examen privado: `title` (título en la barra superior), `course`, `intro` (lista de instrucciones que se muestran antes de comenzar), `durationMinutes` (duración propia; si falta, se usa `DURATION_MINUTES`) y `shuffleQuestions` (`false` mantiene el orden de las preguntas; las opciones siempre se barajan). En las preguntas de relacionar, `distractors` agrega opciones que no tienen pareja. Fórmulas y símbolos (R₀, ⟨k²⟩, √φ, β₁) se escriben tal cual en Unicode; use `∗` en lugar de `*` dentro de una fórmula, porque el asterisco normal marca la cursiva.
+
+<img src="assets/divisor.svg" alt="" width="100%">
+
 ## ⚙ Configuración
 
 Todo se define con variables de entorno. Hay un ejemplo en [`.env.example`](.env.example).

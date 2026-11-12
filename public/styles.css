@@ -244,4 +244,7 @@ th { background: var(--green-800); color: #fff; position: sticky; top: 0; }
 .watermark { position: fixed; inset: 0; z-index: 40; pointer-events: none; background-repeat: repeat; }
 body.obscured #screen-quiz { visibility: hidden; }
 
+/* respeta los saltos de línea de fórmulas y enunciados */
+#q-prompt, .opt span, .order-list .txt, .rv-prompt, .rv-options li, .rv-explain, #intro-facts li { white-space: pre-line; }
+
 @media print { body * { display: none !important; } }

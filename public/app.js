@@ -47,7 +47,11 @@
   /* ---------------------------------------------------------------------- */
   /* Estado                                                                  */
   /* ---------------------------------------------------------------------- */
-  let token = sessionStorage.getItem('mie_token') || null; // por pestaña
+  // El examen se elige por la ruta: / (examen vigente), /prueba (examen de prueba), /parcial...
+  const pathExam = (/^\/([a-z0-9_-]+)\/?$/.exec(window.location.pathname) || [])[1];
+  const examRequested = pathExam && pathExam !== 'admin' ? pathExam : null;
+  const TOKEN_KEY = `mie_token:${examRequested || 'default'}`;
+  let token = sessionStorage.getItem(TOKEN_KEY) || null; // por pestaña
   let st = null;            // último estado entregado por el servidor
   let answers = {};
   let current = 0;
@@ -123,14 +127,14 @@
     try {
       const data = await api('login', {
         method: 'POST',
-        body: { name: $('f-name').value, email: $('f-email').value, document: $('f-document').value },
+        body: { name: $('f-name').value, email: $('f-email').value, document: $('f-document').value, exam: examRequested },
       });
       token = data.token;
       if (token) {
-        sessionStorage.setItem('mie_token', token);
-        channel?.postMessage({ t: 'login', id: tabId });
+        sessionStorage.setItem(TOKEN_KEY, token);
+        channel?.postMessage({ t: 'login', id: tabId, exam: data.exam });
       } else {
-        sessionStorage.removeItem('mie_token');
+        sessionStorage.removeItem(TOKEN_KEY);
       }
       applyState(data);
     } catch (ex) {
@@ -142,7 +146,7 @@
   });
 
   channel?.addEventListener('message', (ev) => {
-    if (ev.data?.t === 'login' && ev.data.id !== tabId && token && (screen === 'quiz' || screen === 'intro')) {
+    if (ev.data?.t === 'login' && ev.data.id !== tabId && st && ev.data.exam === st.exam && token && (screen === 'quiz' || screen === 'intro')) {
       showDisplaced();
     }
   });
@@ -174,10 +178,12 @@
       notice.classList.add('hidden');
     }
     const facts = $('intro-facts');
+    const custom = (data.examIntro || []).map((t) => el('li', { text: t }));
     facts.replaceChildren(
-      el('li', { text: `Duración total: ${Math.round(data.durationMs / 60000)} minutos. El reloj inicia al comenzar y no se detiene.` }),
+      ...custom,
+      el('li', { text: `Duración total en esta aplicación: ${Math.round(data.durationMs / 60000)} minutos. El reloj inicia al comenzar y no se detiene.` }),
       inProgress ? el('li', { text: `Tiempo restante: ${fmtTime(data.remainingMs)}.` }) : null,
-      el('li', { text: 'Tipos de pregunta: selección única y múltiple, verdadero/falso, numéricas con valores propios, ordenar, relacionar, gráficos y simuladores interactivos.' }),
+      custom.length ? null : el('li', { text: 'Tipos de pregunta: selección única y múltiple, verdadero/falso, numéricas con valores propios, ordenar, relacionar, gráficos y simuladores interactivos.' }),
       el('li', { text: 'No salga de la pantalla, no cambie de pestaña ni de ventana y no copie ni pegue. Cualquiera de esas acciones reinicia la evaluación.' }),
     );
     $('intro-start').textContent = inProgress ? 'Continuar evaluación' : 'Comenzar evaluación';
@@ -235,7 +241,7 @@
     stopTimers();
     exitFs();
     token = null;
-    sessionStorage.removeItem('mie_token');
+    sessionStorage.removeItem(TOKEN_KEY);
     showBlock(
       'Sesión abierta en otro lugar',
       'Se ingresó con sus datos desde otra pestaña, ventana o navegador. La evaluación se reinició y quedó registrada una infracción. Cierre esta ventana.',
@@ -758,13 +764,18 @@
   /* ---------------------------------------------------------------------- */
   /* Arranque: recuperar sesión de esta pestaña si existe                    */
   /* ---------------------------------------------------------------------- */
+  // Título del examen (se conoce antes de ingresar)
+  fetch(`/api/config${examRequested ? `?exam=${encodeURIComponent(examRequested)}` : ''}`, { cache: 'no-store' }).then((r) => r.json()).then((c) => {
+    if (c && c.title) { $('app-title').textContent = c.title; document.title = c.title; }
+  }).catch(() => {});
+
   (async function init() {
     if (!token) return show('login');
     try {
       applyState(await api('attempt'));
     } catch {
       token = null;
-      sessionStorage.removeItem('mie_token');
+      sessionStorage.removeItem(TOKEN_KEY);
       show('login');
     }
   })();
