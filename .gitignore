@@ -9,3 +9,4 @@ data/
 *.b64.txt
 examen-privado*
 questions.private.json
+privado/

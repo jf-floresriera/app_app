@@ -9,6 +9,7 @@
  * No imprime las respuestas correctas.
  */
 const fs = require('node:fs');
+const zlib = require('node:zlib');
 const path = require('node:path');
 const Q = require('../lib/questions');
 
@@ -38,5 +39,9 @@ if (sinExplicacion.length) console.log(`Aviso: sin explicación las preguntas ${
 const out = path.join(path.dirname(file), `${path.basename(file, '.json')}.b64.txt`);
 const b64 = Buffer.from(raw, 'utf8').toString('base64');
 fs.writeFileSync(out, b64);
-console.log(`\nValor listo para pegar en la variable QUESTIONS_JSON_B64: ${out} (${b64.length} caracteres)`);
+const gzOut = path.join(path.dirname(file), `${path.basename(file, '.json')}.gz.b64.txt`);
+const gz = zlib.gzipSync(Buffer.from(raw, 'utf8'), { level: 9 }).toString('base64');
+fs.writeFileSync(gzOut, gz);
+console.log(`\nOpción corta (recomendada): variable QUESTIONS_JSON_GZ_B64 con el contenido de ${gzOut} (${gz.length} caracteres)`);
+console.log(`Opción larga: variable QUESTIONS_JSON_B64 con el contenido de ${out} (${b64.length} caracteres)`);
 console.log('NO suba ese archivo ni el JSON a GitHub (el .gitignore ya los excluye).');

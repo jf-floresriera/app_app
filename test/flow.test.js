@@ -350,3 +350,15 @@ test('el panel separa los resultados por examen y no permite ocultar la retroali
   assert.equal((await call(`/api/admin/review?exam=parcial&document=${student(20).document}`, { admin })).status, 200);
   assert.equal((await call('/api/admin/review?exam=zzz&document=1', { admin })).status, 404);
 });
+
+test('el examen privado también se carga comprimido (QUESTIONS_JSON_GZ_B64)', () => {
+  const zlib = require('node:zlib');
+  const exam = { durationMinutes: 60, questions: [{ type: 'truefalse', prompt: 'P1', answer: true }, { type: 'single', prompt: 'P2', options: ['a', 'b'], answer: 1 }] };
+  const gz = zlib.gzipSync(Buffer.from(JSON.stringify(exam))).toString('base64');
+  const env = { ...process.env, QUESTIONS_JSON_GZ_B64: gz };
+  delete env.QUESTIONS_JSON_B64;
+  const out = execFileSync(process.execPath, ['-e',
+    "const Q=require('./lib/questions');const e=Q.getExam('parcial');console.log(JSON.stringify({d:Q.DEFAULT_EXAM,n:e.bank.length,m:e.durationMinutes}))"], {
+    cwd: path.join(__dirname, '..'), env }).toString();
+  assert.deepEqual(JSON.parse(out), { d: 'parcial', n: 2, m: 60 });
+});
