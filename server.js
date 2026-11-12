@@ -10,6 +10,7 @@
  *   MAX_VIOLATIONS       infracciones antes de anular el intento; 0 = ilimitado (por defecto 3)
  *   ALLOWED_EMAIL_DOMAIN dominio del correo institucional (por defecto unal.edu.co)
  *   SHOW_FEEDBACK        'true' para que la retroalimentación de exámenes privados nazca visible (por defecto false: la libera el profesor desde /admin)
+ *   QUIZ_TITLE           título del quiz privado (sobrescribe el del archivo del quiz)
  *   ASSESSMENT_LABEL     palabra con que se nombra la evaluación en pantalla (por defecto Quiz)
  *   DATA_DIR             carpeta donde se guardan los resultados (por defecto ./data)
  */

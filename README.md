@@ -158,6 +158,7 @@ Todo se define con variables de entorno. Hay un ejemplo en [`.env.example`](.env
 |---|---|---|
 | `PORT` | Puerto del servidor | `3000` |
 | `ADMIN_PASSWORD` | Clave del panel del profesor | sin definir (panel desactivado) |
+| `QUIZ_TITLE` | Título del quiz privado (barra superior y pestaña). Sobrescribe el `title` del archivo, así se cambia sin volver a pegarlo | el del archivo |
 | `ASSESSMENT_LABEL` | Palabra con que la pantalla nombra la evaluación (`Quiz`, `Prueba`, `Evaluación`...). El título del quiz privado se cambia en su archivo (`title`) | `Quiz` |
 | `DURATION_MINUTES` | Duración del quiz cuando el quiz no define la suya | `30` |
 | `MAX_VIOLATIONS` | Infracciones antes de anular el intento; `0` = ilimitadas | `3` |

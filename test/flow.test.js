@@ -363,3 +363,9 @@ test('el quiz privado también se carga comprimido (QUESTIONS_JSON_GZ_B64)', () 
     cwd: path.join(__dirname, '..'), env }).toString();
   assert.deepEqual(JSON.parse(out), { d: 'quiz', n: 2, m: 60 });
 });
+
+test('QUIZ_TITLE sobrescribe el título del quiz privado', () => {
+  const env = { ...process.env, QUIZ_TITLE: 'Quiz: Título nuevo', QUESTIONS_JSON_B64: Buffer.from(JSON.stringify({ title: 'Parcial: viejo', questions: [{ type: 'truefalse', prompt: 'x', answer: true }] })).toString('base64') };
+  const out = require('node:child_process').execFileSync(process.execPath, ['-e', "console.log(require('./lib/questions').getExam('quiz').title)"], { cwd: path.join(__dirname, '..'), env }).toString().trim();
+  assert.equal(out, 'Quiz: Título nuevo');
+});

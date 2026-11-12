@@ -137,6 +137,7 @@ Environment variables only. See [`.env.example`](.env.example).
 |---|---|---|
 | `PORT` | Server port | `3000` |
 | `ADMIN_PASSWORD` | Instructor panel password | unset (panel disabled) |
+| `QUIZ_TITLE` | Title of the private quiz (top bar and tab). Overrides the file's `title`, so it can change without re-pasting the file | the file's |
 | `ASSESSMENT_LABEL` | Word the screens use for the assessment (`Quiz`, `Prueba`, `Evaluación`...). The private quiz's title is set in its file (`title`) | `Quiz` |
 | `DURATION_MINUTES` | Quiz length (when the quiz does not set its own) | `30` |
 | `MAX_VIOLATIONS` | Violations before annulment; `0` = unlimited | `3` |
