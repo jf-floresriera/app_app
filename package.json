@@ -1,7 +1,7 @@
 {
-  "name": "examen-app",
+  "name": "quiz-app",
   "version": "1.0.0",
-  "description": "Exámenes web con control de integridad. Laboratorio de Agrocomputación y Análisis Epidemiológico, Universidad Nacional de Colombia.",
+  "description": "Quiz web con control de integridad. Laboratorio de Agrocomputación y Análisis Epidemiológico, Universidad Nacional de Colombia.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

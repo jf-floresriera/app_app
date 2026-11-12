@@ -47,7 +47,7 @@
   /* ---------------------------------------------------------------------- */
   /* Estado                                                                  */
   /* ---------------------------------------------------------------------- */
-  // El examen se elige por la ruta: / (examen vigente), /prueba (examen de prueba), /examen...
+  // El quiz se elige por la ruta: / (quiz vigente), /prueba (quiz de prueba), /quiz...
   const pathExam = (/^\/([a-z0-9_-]+)\/?$/.exec(window.location.pathname) || [])[1];
   const examRequested = pathExam && pathExam !== 'admin' ? pathExam : null;
   const TOKEN_KEY = `mie_token:${examRequested || 'default'}`;
@@ -764,9 +764,10 @@
   /* ---------------------------------------------------------------------- */
   /* Arranque: recuperar sesión de esta pestaña si existe                    */
   /* ---------------------------------------------------------------------- */
-  // Título del examen (se conoce antes de ingresar)
+  // Título del quiz (se conoce antes de ingresar)
   fetch(`/api/config${examRequested ? `?exam=${encodeURIComponent(examRequested)}` : ''}`, { cache: 'no-store' }).then((r) => r.json()).then((c) => {
-    if (c && c.title) { $('app-title').textContent = c.title; document.title = c.title; }
+    const t = c && (c.title || (c.label ? `${c.label} en línea` : null));
+    if (t) { $('app-title').textContent = t; document.title = t; }
   }).catch(() => {});
 
   (async function init() {

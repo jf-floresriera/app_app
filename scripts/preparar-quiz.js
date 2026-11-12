@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Valida un examen en JSON y lo convierte a base64 para guardarlo como
+ * Valida un quiz en JSON y lo convierte a base64 para guardarlo como
  * variable de entorno privada (QUESTIONS_JSON_B64) en el hosting.
  *
- *   node scripts/preparar-examen.js examen.private.json
+ *   node scripts/preparar-quiz.js quiz.private.json
  *
  * No imprime las respuestas correctas.
  */
@@ -15,7 +15,7 @@ const Q = require('../lib/questions');
 
 const file = process.argv[2];
 if (!file) {
-  console.error('Uso: node scripts/preparar-examen.js ruta/al/examen.json');
+  console.error('Uso: node scripts/preparar-quiz.js ruta/al/quiz.json');
   process.exit(1);
 }
 const raw = fs.readFileSync(file, 'utf8');
@@ -31,7 +31,7 @@ const built = bank.map((d) => d.make(rng));
 const porTipo = {};
 for (const q of built) porTipo[q.type] = (porTipo[q.type] || 0) + 1;
 
-console.log(`Examen válido: ${bank.length} preguntas.`);
+console.log(`Quiz válido: ${bank.length} preguntas.`);
 console.log('Por tipo:', Object.entries(porTipo).map(([t, n]) => `${t}=${n}`).join(', '));
 const sinExplicacion = built.map((q, i) => (q.explain ? null : i + 1)).filter(Boolean);
 if (sinExplicacion.length) console.log(`Aviso: sin explicación las preguntas ${sinExplicacion.join(', ')} (la retroalimentación mostrará solo la respuesta correcta).`);

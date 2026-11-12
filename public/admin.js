@@ -1,6 +1,7 @@
 'use strict';
 (() => {
   const $ = (id) => document.getElementById(id);
+  fetch('/api/config').then((r) => r.json()).then((c) => { if (c && c.label) document.title = `Panel del profesor · ${c.label}`; }).catch(() => {});
   let password = '';
   let data = { rows: [], questionIds: [], exams: [], settings: {} };
   let currentExam = '';
@@ -40,7 +41,7 @@
     const fixed = !!(data.settings && data.settings.alwaysVisible);
     $('fb-toggle').classList.toggle('hidden', fixed);
     if (fixed) {
-      $('fb-status').textContent = 'Examen de prueba: la retroalimentación es siempre visible para los estudiantes.';
+      $('fb-status').textContent = 'Quiz de prueba: la retroalimentación es siempre visible para los estudiantes.';
       return;
     }
     $('fb-status').textContent = on

@@ -8,12 +8,12 @@ const path = require('node:path');
 process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'mie-'));
 process.env.ADMIN_PASSWORD = 'clave-de-prueba';
 process.env.MAX_VIOLATIONS = '3';
-// Examen "examen" privado para las pruebas: mismas preguntas que el banco de ejemplo, pero sin ser público.
+// Quiz "quiz" privado para las pruebas: mismas preguntas que el banco de ejemplo, pero sin ser público.
 const SAMPLE_IDS = ['triangulo', 'oomycete', 'cultural', 'patogenos', 'ciclo', 'incidencia', 'severidad', 'audpc',
   'umbral_grafico', 'simulador_fungicida', 'resistencia_fungicidas', 'resistencia_horizontal', 'resistencia_vertical',
   'elementos_mie', 'monociclica'];
 process.env.QUESTIONS_JSON_B64 = Buffer.from(JSON.stringify({
-  title: 'Examen privado (tests)', durationMinutes: 45, questions: SAMPLE_IDS.map((builtin) => ({ builtin })),
+  title: 'Quiz privado (tests)', durationMinutes: 45, questions: SAMPLE_IDS.map((builtin) => ({ builtin })),
 })).toString('base64');
 const Q = require('../lib/questions');
 const { server } = require('../server');
@@ -61,7 +61,7 @@ test('la calificación da el puntaje completo con respuestas correctas y cero si
 
 test('las preguntas paramétricas cambian entre intentos y las claves no se publican', () => {
   const a = Q.buildQuestions('a').find((q) => q.id === 'incidencia');
-  assert.equal(Q.DEFAULT_EXAM, 'examen');
+  assert.equal(Q.DEFAULT_EXAM, 'quiz');
   const b = Q.buildQuestions('b').find((q) => q.id === 'audpc');
   const a2 = Q.buildQuestions('zzz').find((q) => q.id === 'audpc');
   assert.notEqual(b.prompt, a2.prompt);
@@ -236,10 +236,10 @@ test('archivos estáticos: sin recorrido de rutas y con cabeceras de seguridad',
   assert.notEqual(trav2.status, 200);
 });
 
-/* ---------------- examen privado cargado desde variable de entorno ---------------- */
+/* ---------------- quiz privado cargado desde variable de entorno ---------------- */
 const { execFileSync } = require('node:child_process');
 
-test('el examen privado se carga desde QUESTIONS_JSON_B64 y se califica en el servidor', () => {
+test('el quiz privado se carga desde QUESTIONS_JSON_B64 y se califica en el servidor', () => {
   const exam = {
     questions: [
       { type: 'single', prompt: 'P1', options: ['a', 'b', 'c'], answer: 2, explain: 'porque c' },
@@ -277,7 +277,7 @@ test('el examen privado se carga desde QUESTIONS_JSON_B64 y se califica en el se
   assert.equal(r.pub, false); // la explicación no viaja al navegador durante el intento
 });
 
-test('un examen mal escrito da errores claros', () => {
+test('un quiz mal escrito da errores claros', () => {
   assert.throws(() => Q.parseExam('{no es json'), /JSON válido/);
   assert.throws(() => Q.parseExam('{"questions":[]}'), /al menos una pregunta/);
   assert.throws(() => Q.parseExam('{"questions":[{"type":"single","prompt":"x","options":["a","b"],"answer":5}]}'), /answer/);
@@ -286,20 +286,21 @@ test('un examen mal escrito da errores claros', () => {
   assert.throws(() => Q.parseExam('{"questions":[{"id":"a","type":"truefalse","prompt":"x","answer":true},{"id":"a","type":"truefalse","prompt":"y","answer":false}]}'), /repetido/);
 });
 
-/* ---------------- dos exámenes conviviendo: prueba (público) y examen (privado) ---------------- */
+/* ---------------- dos exámenes conviviendo: prueba (público) y quiz (privado) ---------------- */
 
 test('/prueba y / sirven la aplicación y cada ruta muestra su título', async () => {
   assert.equal((await fetch(`${base}/prueba`)).status, 200);
-  assert.equal((await fetch(`${base}/examen`)).status, 200);
+  assert.equal((await fetch(`${base}/quiz`)).status, 200);
   assert.equal((await fetch(`${base}/no-existe`)).status, 404);
   const a = await call('/api/config');
   const b = await call('/api/config?exam=prueba');
-  assert.equal(a.body.title, 'Examen privado (tests)');
-  assert.match(b.body.title, /Examen de prueba/);
+  assert.equal(a.body.title, 'Quiz privado (tests)');
+  assert.match(b.body.title, /Quiz de prueba/);
+  assert.equal(b.body.label, 'Quiz');
   assert.equal((await call('/api/config?exam=zzz')).status, 404);
 });
 
-test('el examen de prueba muestra la retroalimentación al terminar; el examen privado no', async () => {
+test('el quiz de prueba muestra la retroalimentación al terminar; el quiz privado no', async () => {
   const s = student(20);
   // prueba
   const pr = await call('/api/login', { method: 'POST', body: { ...s, exam: 'prueba' } });
@@ -310,12 +311,12 @@ test('el examen de prueba muestra la retroalimentación al terminar; el examen p
   assert.equal(prDone.review.length, 15);
   assert.equal(prDone.durationMs, 30 * 60 * 1000); // DURATION_MINUTES por defecto
 
-  // examen privado (mismo estudiante, intento independiente)
+  // quiz privado (mismo estudiante, intento independiente)
   const pa = await call('/api/login', { method: 'POST', body: s });
-  assert.equal(pa.body.exam, 'examen');
+  assert.equal(pa.body.exam, 'quiz');
   assert.equal(pa.body.status, 'ready'); // el intento de prueba no cuenta aquí
-  assert.equal(pa.body.durationMs, 45 * 60 * 1000); // durationMinutes propio del examen
-  assert.equal(pa.body.examTitle, 'Examen privado (tests)');
+  assert.equal(pa.body.durationMs, 45 * 60 * 1000); // durationMinutes propio del quiz
+  assert.equal(pa.body.examTitle, 'Quiz privado (tests)');
   await call('/api/start', { method: 'POST', token: pa.body.token });
   const paDone = (await call('/api/submit', { method: 'POST', token: pa.body.token })).body;
   assert.equal(paDone.feedbackReleased, false);
@@ -332,33 +333,33 @@ test('los dos exámenes se pueden presentar a la vez sin desplazarse las sesione
   assert.equal((await call('/api/heartbeat', { method: 'POST', token: b.token })).status, 200);
 });
 
-test('el panel separa los resultados por examen y no permite ocultar la retroalimentación pública', async () => {
+test('el panel separa los resultados por quiz y no permite ocultar la retroalimentación pública', async () => {
   const admin = 'clave-de-prueba';
   const privado = await call('/api/admin/results', { admin });
   const prueba = await call('/api/admin/results?exam=prueba', { admin });
-  assert.equal(privado.body.exam, 'examen');
+  assert.equal(privado.body.exam, 'quiz');
   assert.equal(prueba.body.exam, 'prueba');
-  assert.deepEqual(privado.body.exams.map((e) => e.id).sort(), ['examen', 'prueba']);
+  assert.deepEqual(privado.body.exams.map((e) => e.id).sort(), ['prueba', 'quiz']);
   assert.ok(prueba.body.rows.some((r) => r.document === student(20).document));
-  assert.ok(!prueba.body.rows.some((r) => r.document === student(2).document)); // solo hizo el examen
+  assert.ok(!prueba.body.rows.some((r) => r.document === student(2).document)); // solo hizo el quiz
   assert.equal(prueba.body.settings.alwaysVisible, true);
   const no = await call('/api/admin/feedback', { method: 'POST', admin, body: { exam: 'prueba', released: false } });
   assert.equal(no.status, 400);
-  // revisión por examen
+  // revisión por quiz
   const rv = await call(`/api/admin/review?exam=prueba&document=${student(20).document}`, { admin });
   assert.equal(rv.status, 200);
-  assert.equal((await call(`/api/admin/review?exam=examen&document=${student(20).document}`, { admin })).status, 200);
+  assert.equal((await call(`/api/admin/review?exam=quiz&document=${student(20).document}`, { admin })).status, 200);
   assert.equal((await call('/api/admin/review?exam=zzz&document=1', { admin })).status, 404);
 });
 
-test('el examen privado también se carga comprimido (QUESTIONS_JSON_GZ_B64)', () => {
+test('el quiz privado también se carga comprimido (QUESTIONS_JSON_GZ_B64)', () => {
   const zlib = require('node:zlib');
   const exam = { durationMinutes: 60, questions: [{ type: 'truefalse', prompt: 'P1', answer: true }, { type: 'single', prompt: 'P2', options: ['a', 'b'], answer: 1 }] };
   const gz = zlib.gzipSync(Buffer.from(JSON.stringify(exam))).toString('base64');
   const env = { ...process.env, QUESTIONS_JSON_GZ_B64: gz };
   delete env.QUESTIONS_JSON_B64;
   const out = execFileSync(process.execPath, ['-e',
-    "const Q=require('./lib/questions');const e=Q.getExam('examen');console.log(JSON.stringify({d:Q.DEFAULT_EXAM,n:e.bank.length,m:e.durationMinutes}))"], {
+    "const Q=require('./lib/questions');const e=Q.getExam('quiz');console.log(JSON.stringify({d:Q.DEFAULT_EXAM,n:e.bank.length,m:e.durationMinutes}))"], {
     cwd: path.join(__dirname, '..'), env }).toString();
-  assert.deepEqual(JSON.parse(out), { d: 'examen', n: 2, m: 60 });
+  assert.deepEqual(JSON.parse(out), { d: 'quiz', n: 2, m: 60 });
 });

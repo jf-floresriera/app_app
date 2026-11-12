@@ -4,9 +4,10 @@ data/
 *.log
 .DS_Store
 
-# Examen real y sus respuestas: NUNCA se suben al repositorio
+# Quiz real y sus respuestas: NUNCA se suben al repositorio
 *.private.json
 *.b64.txt
 examen-privado*
+quiz-privado*
 questions.private.json
 privado/

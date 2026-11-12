@@ -1,15 +1,16 @@
 'use strict';
 /**
- * Servidor de exámenes en línea (Laboratorio de Agrocomputación, UNAL).
+ * Servidor de evaluaciones en línea (Laboratorio de Agrocomputación, UNAL).
  * Sin dependencias externas: solo Node.js >= 18.
  *
  * Variables de entorno:
  *   PORT                 puerto (por defecto 3000)
  *   ADMIN_PASSWORD       clave del panel del profesor (si no se define, el panel queda desactivado)
- *   DURATION_MINUTES     duración del examen cuando el examen no define la suya (por defecto 30)
+ *   DURATION_MINUTES     duración de la evaluación cuando el examen no define la suya (por defecto 30)
  *   MAX_VIOLATIONS       infracciones antes de anular el intento; 0 = ilimitado (por defecto 3)
  *   ALLOWED_EMAIL_DOMAIN dominio del correo institucional (por defecto unal.edu.co)
  *   SHOW_FEEDBACK        'true' para que la retroalimentación de exámenes privados nazca visible (por defecto false: la libera el profesor desde /admin)
+ *   ASSESSMENT_LABEL     palabra con que se nombra la evaluación en pantalla (por defecto Quiz)
  *   DATA_DIR             carpeta donde se guardan los resultados (por defecto ./data)
  */
 const http = require('node:http');
@@ -44,7 +45,7 @@ try {
   if (err.code !== 'ENOENT') console.error('No se pudo leer', DATA_FILE, err.message);
 }
 
-// Cada registro es (examen, documento): db.students["examen:1012345678"].
+// Cada registro es (examen, documento): db.students["quiz:1012345678"].
 const keyOf = (examId, doc) => `${examId}:${doc}`;
 
 // Ajustes que cambia el profesor desde /admin (se guardan junto con los resultados).
@@ -63,17 +64,19 @@ for (const [k, st] of Object.entries(db.students)) {
   }
 }
 
-// Migración: el examen privado se llamaba "parcial" internamente; ahora es "examen".
+// Migración: el quiz privado se llamó "parcial" y luego "examen" internamente; ahora es "quiz".
 for (const [k, st] of Object.entries(db.students)) {
-  if (st.exam === 'parcial') {
-    st.exam = 'examen';
-    db.students[keyOf('examen', st.document)] = st;
+  if (st.exam === 'parcial' || st.exam === 'examen') {
+    st.exam = 'quiz';
+    db.students[keyOf('quiz', st.document)] = st;
     delete db.students[k];
   }
 }
-if (db.settings.feedback.parcial !== undefined) {
-  db.settings.feedback.examen = db.settings.feedback.parcial;
-  delete db.settings.feedback.parcial;
+for (const old of ['parcial', 'examen']) {
+  if (db.settings.feedback[old] !== undefined) {
+    db.settings.feedback.quiz = db.settings.feedback[old];
+    delete db.settings.feedback[old];
+  }
 }
 
 /** ¿Pueden los estudiantes ver las respuestas correctas de este examen? */
@@ -306,15 +309,15 @@ async function handleApi(req, res, url) {
 
   if (route === 'GET /api/config') {
     const exam = Q.getExam(url.searchParams.get('exam') || Q.DEFAULT_EXAM);
-    if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
-    return json(res, 200, { id: exam.id, title: exam.title, course: exam.course });
+    if (!exam) return json(res, 404, { error: 'Quiz no encontrado.' });
+    return json(res, 200, { id: exam.id, title: exam.title, course: exam.course, label: Q.LABEL });
   }
 
   /* ---- estudiantes ---- */
   if (route === 'POST /api/login') {
     const body = await readBody(req);
     const examId = body.exam ? String(body.exam) : Q.DEFAULT_EXAM;
-    if (!Q.getExam(examId)) return json(res, 404, { error: 'Examen no encontrado.' });
+    if (!Q.getExam(examId)) return json(res, 404, { error: 'Quiz no encontrado.' });
     const v = validateLogin(body);
     if (v.error) return json(res, 400, { error: v.error });
 
@@ -412,7 +415,7 @@ async function handleApi(req, res, url) {
 
     if (route === 'GET /api/admin/results') {
       const exam = examOf(examParam);
-      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+      if (!exam) return json(res, 404, { error: 'Quiz no encontrado.' });
       const mine = Object.values(db.students).filter((st) => st.exam === exam.id);
       mine.forEach(expireIfNeeded);
       const rows = mine.map((st) => ({
@@ -428,6 +431,7 @@ async function handleApi(req, res, url) {
         exam: exam.id,
         exams: Object.values(Q.EXAMS).map((e) => ({ id: e.id, name: e.name, title: e.title, public: e.public })),
         defaultExam: Q.DEFAULT_EXAM,
+        label: Q.LABEL,
         questionIds: exam.bank.map((b) => b.id),
         settings: { feedbackReleased: feedbackReleased(exam.id), alwaysVisible: !!exam.public },
       });
@@ -436,8 +440,8 @@ async function handleApi(req, res, url) {
     if (route === 'POST /api/admin/feedback') {
       const body = await readBody(req);
       const exam = examOf(body.exam);
-      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
-      if (exam.public) return json(res, 400, { error: 'El examen de prueba es público: su retroalimentación siempre es visible.' });
+      if (!exam) return json(res, 404, { error: 'Quiz no encontrado.' });
+      if (exam.public) return json(res, 400, { error: 'El quiz de prueba es público: su retroalimentación siempre es visible.' });
       if (typeof body.released !== 'boolean') return json(res, 400, { error: 'Falta el valor released (true o false).' });
       db.settings.feedback[exam.id] = body.released;
       saveNow();
@@ -446,7 +450,7 @@ async function handleApi(req, res, url) {
 
     if (route === 'GET /api/admin/review') {
       const exam = examOf(examParam);
-      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+      if (!exam) return json(res, 404, { error: 'Quiz no encontrado.' });
       const st = db.students[keyOf(exam.id, String(url.searchParams.get('document') || ''))];
       if (!st) return json(res, 404, { error: 'Documento no encontrado.' });
       if (st.attempt.status !== 'submitted' && st.attempt.status !== 'annulled') {
@@ -462,7 +466,7 @@ async function handleApi(req, res, url) {
     if (route === 'POST /api/admin/reset') {
       const body = await readBody(req);
       const exam = examOf(body.exam);
-      if (!exam) return json(res, 404, { error: 'Examen no encontrado.' });
+      if (!exam) return json(res, 404, { error: 'Quiz no encontrado.' });
       const st = db.students[keyOf(exam.id, String(body.document || ''))];
       if (!st) return json(res, 404, { error: 'Documento no encontrado.' });
       st.attempt = newAttempt();
@@ -478,7 +482,7 @@ function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === '/') rel = '/index.html';
   if (rel === '/admin') rel = '/admin.html';
-  else if (/^\/[a-z0-9_-]+$/.test(rel) && Q.getExam(rel.slice(1))) rel = '/index.html'; // /prueba, /examen
+  else if (/^\/[a-z0-9_-]+$/.test(rel) && Q.getExam(rel.slice(1))) rel = '/index.html'; // /prueba, /quiz
   const file = path.normalize(path.join(PUBLIC_DIR, rel));
   if (!file.startsWith(PUBLIC_DIR + path.sep)) return send(res, 403, 'Prohibido');
   fs.readFile(file, (err, data) => {
@@ -503,9 +507,9 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`Examen en línea escuchando en http://localhost:${PORT}`);
+    console.log(`${Q.LABEL} en línea escuchando en http://localhost:${PORT}`);
     for (const e of Object.values(Q.EXAMS)) {
-      console.log(`  Examen "${e.id}": ${e.public ? 'público (ejemplo)' : 'PRIVADO'}, ${e.bank.length} preguntas${e.id === Q.DEFAULT_EXAM ? '  <- ruta /' : `  <- ruta /${e.id}`}`);
+      console.log(`  Quiz "${e.id}": ${e.public ? 'público (ejemplo)' : 'PRIVADO'}, ${e.bank.length} preguntas${e.id === Q.DEFAULT_EXAM ? '  <- ruta /' : `  <- ruta /${e.id}`}`);
     }
     if (!ADMIN_PASSWORD) console.log('Aviso: ADMIN_PASSWORD no definido; el panel del profesor está desactivado.');
   });

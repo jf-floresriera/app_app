@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="Online exams · Agrocomputation Laboratory · Universidad Nacional de Colombia" width="100%">
+<img src="assets/banner.svg" alt="Online quizzes · Agrocomputation Laboratory · Universidad Nacional de Colombia" width="100%">
 
 <p>
   <img src="https://img.shields.io/badge/node-%E2%89%A518-1b6b35?style=for-the-badge&amp;labelColor=0e3b22&amp;logo=nodedotjs&amp;logoColor=white" alt="Node.js 18+">
@@ -17,16 +17,16 @@
 
 ## 📖 What it is
 
-A web app for running **online exams** in the course **Manejo Integrado de Enfermedades** (Integrated Disease Management), taught by **Joaquín Guillermo Ramírez Gil** in the Department of Agronomy, Faculty of Agricultural Sciences, Universidad Nacional de Colombia, Bogotá campus. Built by **jf-floresriera** for the **Agrocomputation and Epidemiological Analysis Laboratory**.
+A web app for running **online quizzes** in the course **Manejo Integrado de Enfermedades** (Integrated Disease Management), taught by **Joaquín Guillermo Ramírez Gil** in the Department of Agronomy, Faculty of Agricultural Sciences, Universidad Nacional de Colombia, Bogotá campus. Built by **jf-floresriera** for the **Agrocomputation and Epidemiological Analysis Laboratory**.
 
 It runs in any modern browser (desktop, tablet or phone), is **free software**, and needs no paid licences or services: a single Node.js server with no external dependencies.
 
 | Need | How it is handled |
 |---|---|
-| Know who is taking the exam | Sign-in with **full name**, **institutional email** (`@unal.edu.co`) and **ID number** |
+| Know who is taking the quiz | Sign-in with **full name**, **institutional email** (`@unal.edu.co`) and **ID number** |
 | Keep answers the student's own | Copy, paste, print and tab switching are blocked; questions have **different values per student** |
 | Assess more than memory | 9 question types, including interactive charts and simulators |
-| Restart on cheating | Leaving the exam in any way **restarts it** and is logged |
+| Restart on cheating | Leaving the quiz in any way **restarts it** and is logged |
 | Automate the process | Server-side grading, 0.0 to 5.0 scale, instructor panel and CSV export |
 
 <img src="assets/divisor.svg" alt="" width="100%">
@@ -48,7 +48,7 @@ Open <http://localhost:3000> for students and <http://localhost:3000/admin> for 
 ## 🔄 Attempt flow
 
 <div align="center">
-<img src="assets/flujo.svg" alt="Sign-in, instructions, exam and submission; a violation restarts the attempt and three annul it" width="100%">
+<img src="assets/flujo.svg" alt="Sign-in, instructions, quiz and submission; a violation restarts the attempt and three annul it" width="100%">
 </div>
 
 1. The student signs in with the three fields. The first sign-in binds that email to the ID number; a different email for the same ID is rejected.
@@ -101,16 +101,16 @@ A browser cannot guarantee that nobody uses another device. These measures **rai
 - `Ctrl+T` and `Alt+Tab` are not blocked; they are **detected** immediately and trigger a restart.
 - iPhone browsers do not offer full screen; only tab switching and focus loss are monitored there.
 - A system notification or a browser extension can steal focus and cause a violation. Ask students to close other apps and mute notifications.
-- For high-stakes exams, run it **in a supervised room** or combine it with [Safe Exam Browser](https://safeexambrowser.org/) (free and open source).
+- For high-stakes quizzes, run it **in a supervised room** or combine it with [Safe Exam Browser](https://safeexambrowser.org/) (free and open source).
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
-## 🔐 Private exam: answers do not go to GitHub
+## 🔐 Private quiz: answers do not go to GitHub
 
-This repository is **public**, so the sample bank in `lib/questions.js` and its answers are readable by anyone. **Do not commit the real exam.** The app loads it from a private environment variable on the host.
+This repository is **public**, so the sample bank in `lib/questions.js` and its answers are readable by anyone. **Do not commit the real quiz.** The app loads it from a private environment variable on the host.
 
-1. Write the exam in `examen.private.json` (git-ignored). Format: [`examples/examen-ejemplo.json`](examples/examen-ejemplo.json). Types: `single`, `multiple`, `truefalse`, `numeric`, `text`, `ordering`, `matching`, plus chart/simulator questions through `{ "builtin": "umbral_grafico" }`, `simulador_fungicida`, `incidencia`, `severidad` or `audpc`.
-2. Validate and convert: `node scripts/preparar-examen.js examen.private.json` (reports which question is wrong; writes `examen.private.b64.txt`).
+1. Write the quiz in `quiz.private.json` (git-ignored). Format: [`examples/quiz-ejemplo.json`](examples/quiz-ejemplo.json). Types: `single`, `multiple`, `truefalse`, `numeric`, `text`, `ordering`, `matching`, plus chart/simulator questions through `{ "builtin": "umbral_grafico" }`, `simulador_fungicida`, `incidencia`, `severidad` or `audpc`.
+2. Validate and convert: `node scripts/preparar-quiz.js quiz.private.json` (reports which question is wrong; writes `quiz.private.b64.txt`).
 3. On the host (Render: **Environment → Add variable**) create `QUESTIONS_JSON_B64` and paste that file's content.
 4. On boot the server prints `Banco de preguntas: PRIVADO (N preguntas)`.
 
@@ -118,14 +118,14 @@ Students never receive correct answers during the attempt; after submitting they
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
-## 🗂 Two exams in one app
+## 🗂 Two quizzes in one app
 
-| Route | Exam | Visibility |
+| Route | Quiz | Visibility |
 |---|---|---|
-| `/prueba` | **Practice exam**: the bundled sample bank (`lib/questions.js`) | Public. Feedback always visible so students can practise and check their device |
-| `/` | **Current exam**: loaded privately via `QUESTIONS_JSON_B64` | Private. The instructor releases feedback |
+| `/prueba` | **Practice quiz**: the bundled sample bank (`lib/questions.js`) | Public. Feedback always visible so students can practise and check their device |
+| `/` | **Current quiz**: loaded privately via `QUESTIONS_JSON_B64` | Private. The instructor releases feedback |
 
-Without `QUESTIONS_JSON_B64`, `/` opens the practice exam. Each exam has its own attempts, grades, timer and feedback; one student can take both without interference. In `/admin` the **Exam** selector switches between them. Optional fields in the private exam file: `title`, `course`, `intro` (instructions list), `durationMinutes`, `shuffleQuestions` (`false` keeps question order; options are always shuffled), and `distractors` in matching questions. Write formulas as plain Unicode; use `∗` instead of `*` inside a formula because the plain asterisk marks italics.
+Without `QUESTIONS_JSON_B64`, `/` opens the practice quiz. Each quiz has its own attempts, grades, timer and feedback; one student can take both without interference. In `/admin` the **Quiz** selector switches between them. Optional fields in the private quiz file: `title`, `course`, `intro` (instructions list), `durationMinutes`, `shuffleQuestions` (`false` keeps question order; options are always shuffled), and `distractors` in matching questions. Write formulas as plain Unicode; use `∗` instead of `*` inside a formula because the plain asterisk marks italics.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
@@ -137,7 +137,8 @@ Environment variables only. See [`.env.example`](.env.example).
 |---|---|---|
 | `PORT` | Server port | `3000` |
 | `ADMIN_PASSWORD` | Instructor panel password | unset (panel disabled) |
-| `DURATION_MINUTES` | Exam length (when the exam does not set its own) | `30` |
+| `ASSESSMENT_LABEL` | Word the screens use for the assessment (`Quiz`, `Prueba`, `Evaluación`...). The private quiz's title is set in its file (`title`) | `Quiz` |
+| `DURATION_MINUTES` | Quiz length (when the quiz does not set its own) | `30` |
 | `MAX_VIOLATIONS` | Violations before annulment; `0` = unlimited | `3` |
 | `ALLOWED_EMAIL_DOMAIN` | Accepted email domain | `unal.edu.co` |
 | `SHOW_FEEDBACK` | `true` makes feedback start visible. Normally left `false`; the instructor releases it from `/admin` | `false` |
@@ -147,7 +148,7 @@ Environment variables only. See [`.env.example`](.env.example).
 
 ## 👩‍🏫 Instructor panel
 
-Open `/admin` and enter `ADMIN_PASSWORD`. It lists ID, name, email, status, grade, points, restarts, violations (hover for type and time), start and submit times; filters by name, email or ID; and shows the class average. **Release to students / Hide again** controls whether students see the feedback (hidden at first). **View answers** opens a per-student, question-by-question review (their answer, the correct one and an explanation). **Download CSV** includes one score column per question (0 to 1). **Reopen** deletes a student's attempt so they can retake the exam, for example after an internet outage.
+Open `/admin` and enter `ADMIN_PASSWORD`. It lists ID, name, email, status, grade, points, restarts, violations (hover for type and time), start and submit times; filters by name, email or ID; and shows the class average. **Release to students / Hide again** controls whether students see the feedback (hidden at first). **View answers** opens a per-student, question-by-question review (their answer, the correct one and an explanation). **Download CSV** includes one score column per question (0 to 1). **Reopen** deletes a student's attempt so they can retake the quiz, for example after an internet outage.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
@@ -175,16 +176,16 @@ The app must run Node.js; static hosting alone is not enough.
 | Option | When it fits |
 |---|---|
 | **University or lab server** | Best option: data stays in the institution and the disk is persistent |
-| **Any free-tier service that runs Node.js or Docker** | Tests and short exams. Check its current limits |
-| **Your laptop on a local network** | In-room exam: `npm start` and share the machine's IP |
+| **Any free-tier service that runs Node.js or Docker** | Tests and short quizzes. Check its current limits |
+| **Your laptop on a local network** | In-room quiz: `npm start` and share the machine's IP |
 
 ```bash
-docker build -t examen-app .
-docker run -p 3000:3000 -e ADMIN_PASSWORD="a-long-password" -v examen-data:/data examen-app
+docker build -t quiz-app .
+docker run -p 3000:3000 -e ADMIN_PASSWORD="a-long-password" -v quiz-data:/data quiz-app
 ```
 
 - Always serve over **HTTPS** to protect students' personal data in transit.
-- Many free plans have an **ephemeral disk**: `data/results.json` is lost on restart. **Download the CSV** after each exam, or use a persistent volume.
+- Many free plans have an **ephemeral disk**: `data/results.json` is lost on restart. **Download the CSV** after each quiz, or use a persistent volume.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
