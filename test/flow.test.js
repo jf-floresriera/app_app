@@ -227,3 +227,51 @@ test('archivos estáticos: sin recorrido de rutas y con cabeceras de seguridad',
   const trav2 = await fetch(`${base}/%2e%2e/server.js`);
   assert.notEqual(trav2.status, 200);
 });
+
+/* ---------------- examen privado cargado desde variable de entorno ---------------- */
+const { execFileSync } = require('node:child_process');
+
+test('el examen privado se carga desde QUESTIONS_JSON_B64 y se califica en el servidor', () => {
+  const exam = {
+    questions: [
+      { type: 'single', prompt: 'P1', options: ['a', 'b', 'c'], answer: 2, explain: 'porque c' },
+      { type: 'multiple', prompt: 'P2', options: ['a', 'b', 'c'], answers: [0, 2] },
+      { type: 'truefalse', prompt: 'P3', answer: true },
+      { type: 'numeric', prompt: 'P4', answer: 2.5, tol: 0.1 },
+      { type: 'ordering', prompt: 'P5', items: ['uno', 'dos', 'tres'] },
+      { type: 'matching', prompt: 'P6', pairs: [['x', 'X'], ['y', 'Y']] },
+      { builtin: 'audpc' },
+    ],
+  };
+  const script = `
+    const Q = require('./lib/questions');
+    const qs = Q.buildQuestions('semilla');
+    const ans = {};
+    for (const q of qs) {
+      const k = q.key;
+      ans[q.id] = q.type === 'single' || q.type === 'truefalse' ? k.answer : q.type === 'multiple' ? k.answers
+        : q.type === 'numeric' ? String(k.answer) : q.type === 'ordering' ? k.order : k.pairs;
+    }
+    console.log(JSON.stringify({ source: Q.SOURCE, n: qs.length, score: Q.gradeAttempt(qs, ans).score,
+      none: Q.gradeAttempt(qs, {}).score, pub: JSON.stringify(qs.map(Q.publicView)).includes('porque c') }));
+  `;
+  const out = execFileSync(process.execPath, ['-e', script], {
+    cwd: path.join(__dirname, '..'),
+    env: { ...process.env, QUESTIONS_JSON_B64: Buffer.from(JSON.stringify(exam)).toString('base64') },
+  }).toString();
+  const r = JSON.parse(out);
+  assert.equal(r.source, 'private');
+  assert.equal(r.n, 7);
+  assert.equal(r.score, 7);
+  assert.equal(r.none, 0);
+  assert.equal(r.pub, false); // la explicación no viaja al navegador durante el intento
+});
+
+test('un examen mal escrito da errores claros', () => {
+  assert.throws(() => Q.parseExam('{no es json'), /JSON válido/);
+  assert.throws(() => Q.parseExam('{"questions":[]}'), /al menos una pregunta/);
+  assert.throws(() => Q.parseExam('{"questions":[{"type":"single","prompt":"x","options":["a","b"],"answer":5}]}'), /answer/);
+  assert.throws(() => Q.parseExam('{"questions":[{"type":"raro","prompt":"x"}]}'), /desconocido/);
+  assert.throws(() => Q.parseExam('{"questions":[{"builtin":"no_existe"}]}'), /builtin/);
+  assert.throws(() => Q.parseExam('{"questions":[{"id":"a","type":"truefalse","prompt":"x","answer":true},{"id":"a","type":"truefalse","prompt":"y","answer":false}]}'), /repetido/);
+});

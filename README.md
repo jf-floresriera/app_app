@@ -107,11 +107,33 @@ Todo lo que sigue lo hace el navegador del estudiante y lo valida el servidor.
 
 Un navegador no puede garantizar que nadie use otro dispositivo. Estas medidas **dificultan** y **dejan evidencia**, pero no son infalibles:
 
+- **Capturas de pantalla:** ningún sitio web puede bloquearlas. La aplicación detecta `PrintScreen`, `Win+Shift+S` y `Cmd+Shift+3/4/5`, oculta el contenido al perder el foco y reinicia el intento. Además muestra el **nombre y documento del estudiante como marca de agua** sobre toda la pantalla, de modo que cualquier captura o foto queda identificada. No se pueden detectar las capturas hechas con el celular, ni las fotos a la pantalla desde otro aparato.
 - No se puede impedir que un estudiante use **otro dispositivo** (por ejemplo, un segundo celular) para consultar una herramienta de IA.
 - Abrir una pestaña con `Ctrl+T` o cambiar con `Alt+Tab` no se bloquea; se **detecta** de inmediato y reinicia.
 - En iPhone el navegador no permite pantalla completa; allí solo se vigilan el cambio de pestaña y la pérdida de foco.
 - Una notificación del sistema o una extensión del navegador pueden quitar el foco y generar una infracción. Avise a los estudiantes que cierren otras aplicaciones y silencien notificaciones.
 - Si la evaluación tiene un peso alto, aplíquela **presencial en sala** o use [Safe Exam Browser](https://safeexambrowser.org/) (libre y gratuito) junto con esta aplicación.
+
+<img src="assets/divisor.svg" alt="" width="100%">
+
+## 🔐 Examen privado: las respuestas no van a GitHub
+
+Este repositorio es **público**: el banco de ejemplo de `lib/questions.js` y sus respuestas las puede leer cualquiera. **El examen real no debe subirse aquí.** La aplicación lo carga desde una variable de entorno privada del hosting, que nunca pasa por Git.
+
+1. Escriba el examen en un archivo `examen.private.json` (el `.gitignore` lo excluye). El formato está en [`examples/examen-ejemplo.json`](examples/examen-ejemplo.json) y admite: `single`, `multiple`, `truefalse`, `numeric`, `text`, `ordering`, `matching`, y las preguntas con gráfico y simulador mediante `{ "builtin": "umbral_grafico" }`, `{ "builtin": "simulador_fungicida" }`, `{ "builtin": "incidencia" }`, `{ "builtin": "severidad" }` o `{ "builtin": "audpc" }`.
+2. Valídelo y conviértalo:
+   ```bash
+   node scripts/preparar-examen.js examen.private.json
+   ```
+   Si hay un error, indica en qué pregunta. Genera `examen.private.b64.txt`.
+3. En el hosting (Render: **Environment → Add variable**), cree `QUESTIONS_JSON_B64` y pegue el contenido de ese `.b64.txt`.
+4. Al arrancar, el servidor imprime `Banco de preguntas: PRIVADO (N preguntas)`.
+
+Dentro de un texto, `*así*` produce cursiva (nombres científicos). Si `QUESTIONS_JSON_B64` no existe, se usa el banco de ejemplo.
+
+**Quién ve las respuestas correctas:** los estudiantes nunca las reciben durante el intento. Después de enviar ven solo su nota. El profesor las ve en `/admin` (**Ver respuestas**) y decide cuándo liberarlas con **Liberar a los estudiantes**.
+
+Para más protección, haga el repositorio **privado** (GitHub → Settings → Danger Zone → Change visibility). Render puede seguir desplegándolo si autoriza el acceso.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 

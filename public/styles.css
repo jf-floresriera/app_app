@@ -240,4 +240,8 @@ th { background: var(--green-800); color: #fff; position: sticky; top: 0; }
 
 #fb-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
+/* marca de agua con el nombre y documento del estudiante (disuade y rastrea capturas) */
+.watermark { position: fixed; inset: 0; z-index: 40; pointer-events: none; background-repeat: repeat; }
+body.obscured #screen-quiz { visibility: hidden; }
+
 @media print { body * { display: none !important; } }

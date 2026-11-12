@@ -30,7 +30,7 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const ACTIVE_WINDOW_MS = 20 * 1000; // una sesión con latido reciente se considera abierta
 
 const VIOLATION_TYPES = new Set([
-  'tab_hidden', 'window_blur', 'fullscreen_exit', 'second_session', 'devtools_key', 'print', 'other',
+  'tab_hidden', 'window_blur', 'fullscreen_exit', 'second_session', 'devtools_key', 'print', 'screenshot', 'other',
 ]);
 
 /* ------------------------------ persistencia ----------------------------- */
@@ -156,6 +156,7 @@ function attemptState(student) {
   const base = {
     status: a.status,
     name: student.name,
+    document: student.document,
     restarts: a.restarts,
     violations: a.violations.length,
     maxViolations: MAX_VIOLATIONS,
@@ -426,6 +427,7 @@ const server = http.createServer(async (req, res) => {
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`Quiz MIE escuchando en http://localhost:${PORT}`);
+    console.log(`Banco de preguntas: ${Q.SOURCE === 'private' ? 'PRIVADO' : 'de ejemplo'} (${Q.BANK.length} preguntas)`);
     if (!ADMIN_PASSWORD) console.log('Aviso: ADMIN_PASSWORD no definido; el panel del profesor está desactivado.');
   });
 }

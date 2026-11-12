@@ -3,3 +3,9 @@ data/
 .env
 *.log
 .DS_Store
+
+# Examen real y sus respuestas: NUNCA se suben al repositorio
+*.private.json
+*.b64.txt
+examen-privado*
+questions.private.json

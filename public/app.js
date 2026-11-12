@@ -80,8 +80,20 @@
     return data;
   }
 
+  function setWatermark(on) {
+    const w = $('watermark');
+    if (!on || !st || !st.name) { w.classList.add('hidden'); return; }
+    const esc = (t) => String(t).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    const label = esc(`${st.name} · ${st.document || ''}`);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="220"><text x="12" y="130" transform="rotate(-24 210 110)" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#0e3b22" fill-opacity="0.11">${label}</text></svg>`;
+    w.style.backgroundImage = `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+    w.classList.remove('hidden');
+  }
+
   function show(name) {
     screen = name;
+    setWatermark(name === 'quiz' || name === 'done');
+    if (name === 'quiz') document.body.classList.remove('obscured');
     for (const n of ['login', 'intro', 'quiz', 'done', 'block']) $(`screen-${n}`).classList.toggle('hidden', n !== name);
     $('timer').classList.toggle('hidden', name !== 'quiz');
     window.scrollTo(0, 0);
@@ -319,6 +331,7 @@
     fullscreen_exit: 'Se salió de la pantalla completa.',
     devtools_key: 'Se intentó abrir las herramientas del navegador.',
     print: 'Se intentó imprimir o guardar la página.',
+    screenshot: 'Se detectó un intento de captura de pantalla.',
     other: 'Se detectó una acción no permitida.',
   };
 
@@ -347,12 +360,16 @@
     }
   }
 
+  // Al perder el foco se oculta el contenido de inmediato; si el foco vuelve pronto se muestra de nuevo.
+  const obscure = (on) => document.body.classList.toggle('obscured', on && monitoring);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') violation('tab_hidden');
+    if (document.visibilityState === 'hidden') { obscure(true); violation('tab_hidden'); }
   });
   window.addEventListener('blur', () => {
-    setTimeout(() => { if (!document.hasFocus()) violation('window_blur'); }, 350);
+    obscure(true);
+    setTimeout(() => { if (!document.hasFocus()) violation('window_blur'); else obscure(false); }, 350);
   });
+  window.addEventListener('focus', () => { if (!handlingViolation) obscure(false); });
   document.addEventListener('fullscreenchange', () => {
     if (needFullscreen && !document.fullscreenElement) violation('fullscreen_exit');
   });
@@ -381,14 +398,23 @@
       return;
     }
     if (screen === 'login') return;
+    // Capturas: PrintScreen, Win+Shift+S (Recortes), Cmd+Shift+3/4/5 (macOS)
+    if (e.key === 'PrintScreen' || (e.metaKey && e.shiftKey && (k === 's' || ['Digit3', 'Digit4', 'Digit5'].includes(e.code)))) {
+      e.preventDefault();
+      navigator.clipboard?.writeText('').catch(() => {});
+      violation('screenshot');
+      return;
+    }
     if (mod && ['c', 'x', 'v', 'a', 'p', 's', 'u', 'f', 'g'].includes(k)) {
       e.preventDefault();
       if (k === 'p' || k === 's') violation('print');
     }
-    if (e.key === 'PrintScreen') navigator.clipboard?.writeText('').catch(() => {});
   });
   document.addEventListener('keyup', (e) => {
-    if (e.key === 'PrintScreen') navigator.clipboard?.writeText('').catch(() => {});
+    if (e.key === 'PrintScreen') {
+      navigator.clipboard?.writeText('').catch(() => {});
+      violation('screenshot');
+    }
   });
 
   /* ---------------------------------------------------------------------- */

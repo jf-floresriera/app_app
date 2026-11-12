@@ -96,11 +96,25 @@ The student's browser detects; the server validates.
 
 A browser cannot guarantee that nobody uses another device. These measures **raise the cost** of cheating and **leave evidence**; they are not foolproof.
 
+- **Screenshots** cannot be blocked by any website. The app detects `PrintScreen`, `Win+Shift+S` and `Cmd+Shift+3/4/5`, hides content on focus loss and restarts the attempt. It also overlays the **student's name and ID as a watermark**, so any capture or photo is traceable. Phone screenshots and photos of the screen cannot be detected.
 - A student can still consult an AI tool on **another device** (for example a second phone).
 - `Ctrl+T` and `Alt+Tab` are not blocked; they are **detected** immediately and trigger a restart.
 - iPhone browsers do not offer full screen; only tab switching and focus loss are monitored there.
 - A system notification or a browser extension can steal focus and cause a violation. Ask students to close other apps and mute notifications.
 - For high-stakes exams, run it **in a supervised room** or combine it with [Safe Exam Browser](https://safeexambrowser.org/) (free and open source).
+
+<img src="assets/divisor.svg" alt="" width="100%">
+
+## 🔐 Private exam: answers do not go to GitHub
+
+This repository is **public**, so the sample bank in `lib/questions.js` and its answers are readable by anyone. **Do not commit the real exam.** The app loads it from a private environment variable on the host.
+
+1. Write the exam in `examen.private.json` (git-ignored). Format: [`examples/examen-ejemplo.json`](examples/examen-ejemplo.json). Types: `single`, `multiple`, `truefalse`, `numeric`, `text`, `ordering`, `matching`, plus chart/simulator questions through `{ "builtin": "umbral_grafico" }`, `simulador_fungicida`, `incidencia`, `severidad` or `audpc`.
+2. Validate and convert: `node scripts/preparar-examen.js examen.private.json` (reports which question is wrong; writes `examen.private.b64.txt`).
+3. On the host (Render: **Environment → Add variable**) create `QUESTIONS_JSON_B64` and paste that file's content.
+4. On boot the server prints `Banco de preguntas: PRIVADO (N preguntas)`.
+
+Students never receive correct answers during the attempt; after submitting they see only the grade. The instructor sees them in `/admin` and releases them when ready. For extra protection make the repository **private**.
 
 <img src="assets/divisor.svg" alt="" width="100%">
 
